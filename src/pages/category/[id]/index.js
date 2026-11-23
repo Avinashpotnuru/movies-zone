@@ -1,12 +1,64 @@
 import Genres from "@/components/Genres";
 import React from "react";
 
-const CategoryPage = () => {
+import Seo from "@/components/Seo";
+import { absoluteUrl, truncate } from "@/config/site";
+
+const CategoryPage = ({ id, meta }) => {
+  const genreName = meta?.name || "Genre";
+  const count = meta?.totalResults
+    ? `${meta.totalResults.toLocaleString()} `
+    : "";
+  const description =
+    genreName !== "Genre"
+      ? `Browse ${count}popular ${genreName.toLowerCase()} films on Movies-Zone.`
+      : "Browse popular films by genre on Movies-Zone.";
+
   return (
-    <div>
+    <>
+      <Seo
+        title={`${genreName} movies`}
+        description={truncate(description)}
+        path={`/category/${id}`}
+        image={meta?.image || "/backgroundImage.jpg"}
+        imageAlt={`${genreName} films`}
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "CollectionPage",
+          name: `${genreName} movies`,
+          description,
+          url: absoluteUrl(`/category/${id}`),
+          numberOfItems: meta?.totalResults || 0,
+        }}
+      />
       <Genres />
-    </div>
+    </>
   );
+};
+
+export const getServerSideProps = async ({ params }) => {
+  const rawId = params.id;
+  const id = Array.isArray(rawId) ? rawId[0] : rawId;
+
+  // Server-only chunk: both API helpers stay out of the client bundle.
+  const { fetchGenreSeoMeta, fetchGenreCollectionSeoMeta } = await import(
+    "@/config/seo"
+  );
+  const [genre, collection] = await Promise.all([
+    fetchGenreSeoMeta(id),
+    fetchGenreCollectionSeoMeta(id),
+  ]);
+
+  return {
+    props: {
+      id,
+      meta: {
+        name: genre?.name || "",
+        image: collection?.image || "",
+        totalResults: collection?.totalResults || 0,
+      },
+    },
+  };
 };
 
 export default CategoryPage;

@@ -1,72 +1,123 @@
-import React, { useState } from "react";
-import { tabsHandler } from "@/store/slice/tabsSlice";
-import { useDispatch } from "react-redux";
-import { FaAnglesLeft, FaAnglesRight } from "react-icons/fa6";
+import { AiOutlineLeft, AiOutlineRight } from "react-icons/ai";
 
-const Pagination = ({ pages }) => {
-  const dispatch = useDispatch();
-  const [selectedNumber, setSelectedNumber] = useState(1);
+const pad = (value) => String(value ?? 0).padStart(2, "0");
 
-  const onCLickPageNumber = (page) => {
-    setSelectedNumber(page);
-    dispatch(tabsHandler(page));
-  };
+const getPageItems = (current, total) => {
+  if (total <= 7) {
+    return Array.from({ length: total }, (_, index) => index + 1);
+  }
 
-  const renderPageButtons = () => {
-    const totalPages = Math.ceil(pages / 20); // Assuming 20 items per page
+  const items = [1];
 
-    let startPage = Math.max(1, selectedNumber - 2);
-    let endPage = Math.min(totalPages, startPage + 4);
+  const start = Math.max(2, current - 2);
+  const end = Math.min(total - 1, current + 2);
 
-    if (endPage - startPage < 4) {
-      startPage = Math.max(1, endPage - 4);
-    }
+  if (start > 2) items.push("start-gap");
+  for (let page = start; page <= end; page += 1) items.push(page);
+  if (end < total - 1) items.push("end-gap");
 
-    const pageButtons = [];
-    for (let i = startPage; i <= endPage; i++) {
-      pageButtons.push(
-        <button
-          key={i}
-          className={`px-3 py-2 ${
-            selectedNumber === i
-              ? "bg-slate-900 text-slate-50"
-              : "bg-slate-500 text-slate-50"
-          } rounded-md`}
-          onClick={() => onCLickPageNumber(i)}
-          type="button"
-        >
-          {i}
-        </button>
-      );
-    }
+  items.push(total);
 
-    return pageButtons;
-  };
+  return items;
+};
+
+const Pagination = ({ pages, current, onChange }) => {
+  const total = Math.max(1, Number(pages) || 1);
+  const active = Math.min(Math.max(Number(current) || 1, 1), total);
+
+  if (total <= 1) return null;
+
+  const pageItems = getPageItems(active, total);
 
   return (
-    <div className="flex flex-col justify-center overflow-x-auto max-w-full">
-      <div className="flex space-x-2 pt-4">
-        {selectedNumber > 1 && (
+    <nav
+      aria-label="Pagination"
+      className="mt-10 border border-white/10 bg-[#061a31]"
+    >
+      <div className="flex flex-col gap-4 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+        <div className="flex items-center gap-3">
+          <span className="h-8 w-[3px] bg-[#F4442E]" aria-hidden="true" />
+          <div>
+            <p className="text-[9px] font-bold uppercase tracking-[0.24em] text-slate-500">
+              Page
+            </p>
+            <p className="mt-1 text-lg font-black leading-none text-white tabular-nums">
+              {pad(active)}
+              <span className="mx-1 text-slate-700">/</span>
+              <span className="text-slate-500">{pad(total)}</span>
+            </p>
+          </div>
+        </div>
+
+        <div className="no-scrollbar flex min-w-0 flex-1 items-center justify-start gap-1.5 overflow-x-auto sm:justify-center">
+          {pageItems.map((item) =>
+            typeof item === "number" ? (
+              <button
+                key={item}
+                type="button"
+                onClick={() => onChange(item)}
+                aria-current={item === active ? "page" : undefined}
+                aria-label={`Go to page ${item}`}
+                className={`flex h-11 w-11 shrink-0 items-center justify-center border text-sm font-bold tabular-nums transition-colors duration-300 ${
+                  item === active
+                    ? "border-[#F4442E] bg-[#F4442E] text-[#04152d]"
+                    : "border-white/10 text-slate-400 hover:border-[#51E5FF]/60 hover:text-white"
+                }`}
+              >
+                {pad(item)}
+              </button>
+            ) : (
+              <span
+                key={item}
+                aria-hidden="true"
+                className="flex h-11 w-5 shrink-0 items-center justify-center text-[10px] font-bold tracking-[0.2em] text-slate-700"
+              >
+                •••
+              </span>
+            )
+          )}
+        </div>
+
+        <div className="flex items-center gap-2">
           <button
-            className="px-3 py-2 bg-slate-left text-slate-50 rounded-md"
-            onClick={() => onCLickPageNumber(selectedNumber - 1)}
             type="button"
+            onClick={() => onChange(active - 1)}
+            disabled={active <= 1}
+            aria-label="Previous page"
+            className="group flex h-11 items-center gap-2 border border-white/15 px-3 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-300 transition-colors duration-300 hover:border-[#51E5FF]/60 hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
           >
-            <FaAnglesLeft />
+            <AiOutlineLeft
+              size={16}
+              aria-hidden="true"
+              className="transition-transform duration-300 group-hover:-translate-x-0.5"
+            />
+            <span className="hidden sm:inline">Prev</span>
           </button>
-        )}
-        {renderPageButtons()}
-        {selectedNumber < Math.ceil(pages / 20) && (
+
           <button
-            className="px-3 py-2 bg-slate-right text-slate-50 rounded-md"
-            onClick={() => onCLickPageNumber(selectedNumber + 1)}
             type="button"
+            onClick={() => onChange(active + 1)}
+            disabled={active >= total}
+            aria-label="Next page"
+            className="group flex h-11 items-center gap-2 border border-white/15 px-3 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-300 transition-colors duration-300 hover:border-[#51E5FF]/60 hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
           >
-            <FaAnglesRight />
+            <span className="hidden sm:inline">Next</span>
+            <AiOutlineRight
+              size={16}
+              aria-hidden="true"
+              className="transition-transform duration-300 group-hover:translate-x-0.5"
+            />
           </button>
-        )}
+        </div>
       </div>
-    </div>
+
+      <div className="h-[3px] bg-white/5" aria-hidden="true">
+        <div
+          className="h-full w-full origin-left bg-[#F4442E] transition-transform duration-500 ease-out"
+          style={{ transform: `scaleX(${active / total})` }}
+        />
+      </div>
+    </nav>
   );
 };
 

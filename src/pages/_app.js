@@ -16,10 +16,7 @@ export default function App({ Component, pageProps }) {
           type="image/x-icon"
           sizes="any"
         />
-        <meta
-          name="description"
-          content="It is a movie-search app where users can see details about movies and know about movie casting and crew  details. And also search movies in this app. Users can see the popular, top-rated rated, and trending movies."
-        />
+        <meta name="theme-color" content="#04152d" />
       </Head>
       <Provider store={store}>
         <div className="overflow-x-container">

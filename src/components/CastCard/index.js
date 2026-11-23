@@ -1,68 +1,118 @@
-//next imports
-
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 
+import { AiOutlineArrowRight, AiOutlineUser } from "react-icons/ai";
+
+import { imagePath } from "@/utilities";
+
+const getInitials = (name) =>
+  name
+    ?.trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part.charAt(0).toUpperCase())
+    .join("") || "";
+
 const CastCard = ({
+  person,
+  role,
   name,
   character,
   profile_path,
-  crew_name,
   job,
-  gender,
+  crew_name,
   id,
+  index,
 }) => {
-  const imagePath =
-    "https://image.tmdb.org/t/p/w500/https://image.tmdb.org/t/p/w500";
-  return (
-    <div className="w-[100px] max-h-[180px] bg-gray-800 flex justify-center my-4 items-center  border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
-      <div className="flex flex-col  items-center  w-[100px] my-auto  h-full">
-        <div className="max-h-[60%] w-full overflow-hidden">
-          <Link href={`/cast/${id}`}>
-            {profile_path ? (
-              <Image
-                height={500}
-                width={500}
-                className="w-full h-[120px] mb-3 rounded-lg overflow-hidden shadow-lg  object-center"
-                src={`${imagePath}${profile_path}`}
-                alt={`image${id}`}
-              />
-            ) : gender == 1 ? (
-              <Image
-                height={600}
-                width={500}
-                className="w-full h-full mb-3 overflow-hidden  shadow-lg"
-                src="/dummy-image.jpg"
-                alt="Bonnie image"
-              />
-            ) : (
-              <Image
-                height={600}
-                width={500}
-                className="w-full h-full mb-3 overflow-hidden  shadow-lg"
-                src="/women.jpg"
-                alt="Bonnie image"
-              />
-            )}
-          </Link>
-        </div>
+  const [imageFailed, setImageFailed] = useState(false);
 
-        <div className=" max-h-[40%] justify-center my-1 overflow-y-auto">
-          <h5 className="mb-1 text-sm font-medium text-center text-white dark:text-white">
-            {name}
-          </h5>
-          {!crew_name ? (
-            <h1 className="text-xs w-full mx-auto text-center text-white dark:text-gray-400">
-              {character}
-            </h1>
-          ) : (
-            <h1 className="text-xs text-center mx-auto w-full text-white justify-center dark:text-gray-400">
-              {job}
-            </h1>
-          )}
+  const data = person ?? { name, character, profile_path, job, id };
+  const personId = data?.id ?? id;
+  const displayName = data?.name?.trim() || "Unknown name";
+  const displayRole = crew_name
+    ? data?.job || job || "Crew"
+    : role || data?.character || character || "Cast";
+
+  const hasProfile =
+    personId !== undefined &&
+    personId !== null &&
+    Number.isFinite(Number(personId)) &&
+    Number(personId) > 0;
+
+  const showImage = Boolean(data?.profile_path) && !imageFailed;
+  const initials = getInitials(data?.name);
+
+  const Wrapper = hasProfile ? Link : "div";
+  const wrapperProps = hasProfile ? { href: `/cast/${personId}` } : {};
+
+  return (
+    <Wrapper
+      {...wrapperProps}
+      className={`group block w-[140px] shrink-0 sm:w-[160px] ${
+        hasProfile ? "" : "cursor-default"
+      }`}
+    >
+      <div className="relative aspect-[3/4] overflow-hidden border border-white/10 bg-[#0a1b31] transition-colors duration-300 group-hover:border-[#51E5FF]/60">
+        {showImage ? (
+          <Image
+            src={`${imagePath}${data.profile_path}`}
+            alt={displayName === "Unknown name" ? "" : `${displayName} profile`}
+            fill
+            sizes="(max-width: 640px) 140px, 160px"
+            className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+            onError={() => setImageFailed(true)}
+          />
+        ) : (
+          <div className="flex h-full w-full flex-col items-center justify-center gap-3 bg-gradient-to-br from-[#0a1b31] via-[#04152d] to-[#123a52] px-3 text-center">
+            <span className="flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-white/5">
+              {initials ? (
+                <span className="text-base font-black text-slate-300">
+                  {initials}
+                </span>
+              ) : (
+                <AiOutlineUser size={22} aria-hidden="true" className="text-slate-500" />
+              )}
+            </span>
+            {!hasProfile && (
+              <span className="text-[9px] font-bold uppercase tracking-[0.16em] text-slate-500">
+                Profile unavailable
+              </span>
+            )}
+          </div>
+        )}
+
+        <div className="absolute inset-0 bg-gradient-to-t from-[#04152d] via-[#04152d]/10 to-transparent" aria-hidden="true" />
+
+        {typeof index === "number" && (
+          <span className="absolute left-2 top-2 border border-white/20 bg-[#04152d]/85 px-1.5 py-0.5 text-[9px] font-bold tracking-[0.14em] text-[#F4442E] tabular-nums">
+            {String(index + 1).padStart(2, "0")}
+          </span>
+        )}
+
+        <div className="absolute inset-x-0 bottom-0 p-2.5">
+          <p
+            title={displayName}
+            className="truncate text-xs font-bold text-white transition-colors group-hover:text-[#51E5FF]"
+          >
+            {displayName}
+          </p>
+          <p title={displayRole} className="mt-0.5 truncate text-[10px] text-slate-400">
+            {displayRole}
+          </p>
+          <div className="mt-2 flex items-center gap-1 text-[9px] font-bold uppercase tracking-[0.16em] text-[#51E5FF] opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+            {hasProfile ? (
+              <>
+                View profile
+                <AiOutlineArrowRight size={10} aria-hidden="true" />
+              </>
+            ) : (
+              "No profile linked"
+            )}
+          </div>
         </div>
       </div>
-    </div>
+    </Wrapper>
   );
 };
 

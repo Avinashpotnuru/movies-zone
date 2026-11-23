@@ -1,11 +1,17 @@
-//import components
+import Seo from "@/components/Seo";
 import Favorites from "@/components/Favorites";
 
 const FavoritePage = () => {
   return (
-    <div className="pt-10">
+    <>
+      <Seo
+        title="Your favorites"
+        description="Your personal watchlist of saved movies on Movies-Zone."
+        path="/favorite"
+        noindex
+      />
       <Favorites />
-    </div>
+    </>
   );
 };
 

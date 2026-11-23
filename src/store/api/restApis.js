@@ -46,7 +46,10 @@ const restApi = createApi({
     }),
 
     getSearchMovies: builder.query({
-      query: (data) => `search/movie?query=${data.searchInput}`,
+      query: (data) =>
+        `search/movie?query=${encodeURIComponent(
+          data.searchInput || ""
+        )}&include_adult=false&page=${data.pageId || 1}`,
       providesTags: ["Movies"],
     }),
 
