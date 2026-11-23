@@ -1,13 +1,15 @@
-import Image from "next/image";
-import { Inter } from "next/font/google";
+import Seo from "@/components/Seo";
 import Movies from "@/components/Movies";
-
-const inter = Inter({ subsets: ["latin"] });
 
 export default function Home() {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-between  pb-10 ">
+    <>
+      <Seo
+        title="Discover movies, genres & hidden gems"
+        description="Browse trending films, explore genres, and build a watchlist on Movies-Zone."
+        path="/"
+      />
       <Movies />
-    </div>
+    </>
   );
 }

@@ -6,12 +6,8 @@ import { imagePath } from "@/utilities";
 //import from store
 
 import { useGetMovieImagesQuery } from "@/store/api/restApis";
-import { useRouter } from "next/router";
 
-const ImagesComponent = () => {
-  const router = useRouter();
-  const { id } = router.query;
-
+const ImagesComponent = ({ id }) => {
   const { data } = useGetMovieImagesQuery({ id });
 
   const renderImages = (images, type) => (
