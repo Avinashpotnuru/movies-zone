@@ -90,7 +90,7 @@ const Movies = () => {
   const popularPicks = popularData?.results?.slice(0, 6) ?? [];
 
   const trendingToggle = (
-    <div className="flex border border-white/15">
+    <div className="mx-auto flex w-fit border border-white/15 sm:mx-0">
       {[
         { value: "day", label: "Today" },
         { value: "week", label: "This week" },

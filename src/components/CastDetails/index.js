@@ -235,6 +235,7 @@ const CastDetails = () => {
     { id },
     { skip: !ready }
   );
+  const [showBio, setShowBio] = useState(false);
   const [showFullBio, setShowFullBio] = useState(false);
   const [mediaFilter, setMediaFilter] = useState("all");
   const [sortBy, setSortBy] = useState("popular");
@@ -245,28 +246,31 @@ const CastDetails = () => {
     (data?.images?.profiles ?? []).filter((photo) => photo.file_path).length;
 
   useEffect(() => {
-    if (activePhoto === null) return;
+    if (activePhoto === null && !showBio) return;
     const previous = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = previous;
     };
-  }, [activePhoto]);
+  }, [activePhoto, showBio]);
 
   useEffect(() => {
-    if (activePhoto === null) return;
+    if (activePhoto === null && !showBio) return;
     const onKeyDown = (event) => {
-      if (event.key === "Escape") setActivePhoto(null);
-      if (event.key === "ArrowLeft") {
+      if (event.key === "Escape") {
+        setActivePhoto(null);
+        setShowBio(false);
+      }
+      if (activePhoto !== null && event.key === "ArrowLeft") {
         setActivePhoto((prev) => (prev - 1 + photoCount) % photoCount);
       }
-      if (event.key === "ArrowRight") {
+      if (activePhoto !== null && event.key === "ArrowRight") {
         setActivePhoto((prev) => (prev + 1) % photoCount);
       }
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [activePhoto, photoCount]);
+  }, [activePhoto, photoCount, showBio]);
 
   useEffect(() => {
     setVisibleCount(CREDIT_PAGE_SIZE);
@@ -423,95 +427,188 @@ const CastDetails = () => {
             </span>
           </div>
 
-          <div className="mt-8 grid grid-cols-[120px_minmax(0,1fr)] gap-6 sm:grid-cols-[180px_minmax(0,1fr)] sm:gap-9 lg:grid-cols-[300px_minmax(0,1fr)] lg:items-end lg:gap-12">
-            <div className="relative aspect-[3/4] overflow-hidden border border-white/20 bg-[#0a1b31] shadow-2xl shadow-black/50">
-              <Image
-                src={profileSrc}
-                alt={data.name ? `${data.name} profile` : "Profile"}
-                fill
-                priority
-                sizes="(max-width: 640px) 120px, (max-width: 1024px) 180px, 300px"
-                className="object-cover object-top"
-              />
-              <span className="absolute bottom-0 left-0 bg-[#F4442E] px-2.5 py-1.5 text-[9px] font-black uppercase tracking-[0.18em] text-white">
-                Profile
-              </span>
-            </div>
+          <div className="mt-7 sm:mt-8">
+            <div className="grid grid-cols-[88px_minmax(0,1fr)] gap-x-3 gap-y-3 sm:hidden">
+              <div className="relative aspect-[3/4] w-[88px] shrink-0 overflow-hidden border border-white/20 bg-[#0a1b31] shadow-2xl shadow-black/50">
+                <Image
+                  src={profileSrc}
+                  alt={data.name ? `${data.name} profile` : "Profile"}
+                  fill
+                  priority
+                  sizes="88px"
+                  className="object-cover object-top"
+                />
+                <span className="absolute bottom-0 left-0 bg-[#F4442E] px-2.5 py-1.5 text-[9px] font-black uppercase tracking-[0.18em] text-white">
+                  Profile
+                </span>
+              </div>
 
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-[#51E5FF]">
-                {data.known_for_department || "Cast"} · Filmography
-              </p>
-              <h1
-                className="mt-4 font-extrabold leading-[0.95] tracking-[-0.04em] text-white"
-                style={{ fontSize: "clamp(2rem, 4.4vw, 3.75rem)" }}
-              >
-                {data.name || "Unknown"}
-              </h1>
+              <div className="min-w-0">
+                <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-[#51E5FF]">
+                  {data.known_for_department || "Cast"} · Filmography
+                </p>
+                <div className="mt-3 flex flex-wrap items-baseline gap-x-3 gap-y-2">
+                  <h1 className="w-full text-[clamp(1.75rem,7vw,2.25rem)] font-extrabold leading-[1.02] tracking-[-0.035em] text-white">
+                    {data.name || "Unknown"}
+                  </h1>
+                  {aliases.length > 0 &&
+                    aliases.map((name) => (
+                      <span
+                        key={name}
+                        title="Also known as"
+                        aria-label={`Also known as ${name}`}
+                        className="border border-white/15 px-2.5 py-1 text-[11px] font-normal leading-none text-slate-400"
+                      >
+                        {name}
+                      </span>
+                    ))}
+                </div>
+              </div>
 
-              {aliases.length > 0 && (
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {aliases.map((name) => (
-                    <span
-                      key={name}
-                      className="border border-white/15 px-2.5 py-1 text-[11px] text-slate-400"
+              <div className="col-span-2 mt-3 min-w-0">
+                {data.biography && (
+                  <div className="mt-3 max-w-2xl">
+                    <p className="line-clamp-3 text-[13px] leading-relaxed text-slate-300">
+                      {data.biography}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActivePhoto(null);
+                        setShowBio(true);
+                      }}
+                      className="mt-3 inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.16em] text-[#51E5FF] transition-colors hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#51E5FF]"
                     >
-                      {name}
-                    </span>
-                  ))}
-                </div>
-              )}
+                      Read full bio
+                      <AiOutlineArrowRight size={14} aria-hidden="true" />
+                    </button>
+                  </div>
+                )}
 
-              {data.biography && (
-                <div className="mt-6 max-w-2xl">
-                  <p
-                    className={`text-sm leading-relaxed text-slate-300 sm:text-base ${
-                      showFullBio ? "" : "line-clamp-4"
-                    }`}
-                  >
-                    {data.biography}
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => setShowFullBio((prev) => !prev)}
-                    className="mt-3 inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.16em] text-[#51E5FF] transition-colors hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#51E5FF]"
-                  >
-                    {showFullBio ? "Show less" : "Read full bio"}
-                    <AiOutlineArrowRight size={14} aria-hidden="true" />
-                  </button>
-                </div>
-              )}
+                {socialLinks.length > 0 && (
+                  <div className="mt-4 grid grid-cols-3 gap-2">
+                    {socialLinks.map(({ label, href, Icon }) => (
+                      <a
+                        key={label}
+                        href={href}
+                        target="_blank"
+                        rel="noreferrer"
+                        aria-label={label}
+                        className="flex h-11 w-full items-center justify-center border border-white/20 text-slate-300 transition-colors hover:border-[#51E5FF] hover:text-[#51E5FF] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#51E5FF]"
+                      >
+                        <Icon size={17} aria-hidden="true" />
+                      </a>
+                    ))}
+                  </div>
+                )}
 
-              {socialLinks.length > 0 && (
-                <div className="mt-6 flex flex-wrap gap-2">
-                  {socialLinks.map(({ label, href, Icon }) => (
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {externalLinks.map(({ label, href }) => (
                     <a
                       key={label}
                       href={href}
                       target="_blank"
                       rel="noreferrer"
-                      aria-label={label}
-                      className="flex h-10 w-10 items-center justify-center border border-white/20 text-slate-300 transition-colors hover:border-[#51E5FF] hover:text-[#51E5FF] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#51E5FF]"
+                      className="inline-flex min-h-[40px] items-center gap-2 border border-white/15 px-3 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400 transition-colors hover:border-[#51E5FF] hover:text-[#51E5FF]"
                     >
-                      <Icon size={17} aria-hidden="true" />
+                      {label}
+                      <AiOutlineArrowRight size={12} aria-hidden="true" />
                     </a>
                   ))}
                 </div>
-              )}
+              </div>
+            </div>
 
-              <div className="mt-4 flex flex-wrap gap-2">
-                {externalLinks.map(({ label, href }) => (
-                  <a
-                    key={label}
-                    href={href}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex min-h-[36px] items-center gap-2 border border-white/15 px-3 text-[11px] font-bold uppercase tracking-[0.14em] text-slate-400 transition-colors hover:border-[#51E5FF] hover:text-[#51E5FF]"
-                  >
-                    {label}
-                    <AiOutlineArrowRight size={12} aria-hidden="true" />
-                  </a>
-                ))}
+            <div className="hidden sm:grid sm:grid-cols-[180px_minmax(0,1fr)] sm:gap-9 lg:grid-cols-[300px_minmax(0,1fr)] lg:items-end lg:gap-12">
+              <div className="relative aspect-[3/4] overflow-hidden border border-white/20 bg-[#0a1b31] shadow-2xl shadow-black/50">
+                <Image
+                  src={profileSrc}
+                  alt={data.name ? `${data.name} profile` : "Profile"}
+                  fill
+                  priority
+                  sizes="(max-width: 1024px) 180px, 300px"
+                  className="object-cover object-top"
+                />
+                <span className="absolute bottom-0 left-0 bg-[#F4442E] px-2.5 py-1.5 text-[9px] font-black uppercase tracking-[0.18em] text-white">
+                  Profile
+                </span>
+              </div>
+
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-[#51E5FF]">
+                  {data.known_for_department || "Cast"} · Filmography
+                </p>
+                <h1
+                  className="mt-4 font-extrabold leading-[0.95] tracking-[-0.04em] text-white"
+                  style={{ fontSize: "clamp(2rem, 4.4vw, 3.75rem)" }}
+                >
+                  {data.name || "Unknown"}
+                </h1>
+
+                {aliases.length > 0 && (
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {aliases.map((name) => (
+                      <span
+                        key={name}
+                        className="border border-white/15 px-2.5 py-1 text-[11px] text-slate-400"
+                      >
+                        {name}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                {data.biography && (
+                  <div className="mt-6 max-w-2xl">
+                    <p
+                      className={`text-sm leading-relaxed text-slate-300 sm:text-base ${
+                        showFullBio ? "" : "line-clamp-4"
+                      }`}
+                    >
+                      {data.biography}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setShowFullBio((prev) => !prev)}
+                      className="mt-3 inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.16em] text-[#51E5FF] transition-colors hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#51E5FF]"
+                    >
+                      {showFullBio ? "Show less" : "Read full bio"}
+                      <AiOutlineArrowRight size={14} aria-hidden="true" />
+                    </button>
+                  </div>
+                )}
+
+                {socialLinks.length > 0 && (
+                  <div className="mt-6 flex flex-wrap gap-2">
+                    {socialLinks.map(({ label, href, Icon }) => (
+                      <a
+                        key={label}
+                        href={href}
+                        target="_blank"
+                        rel="noreferrer"
+                        aria-label={label}
+                        className="flex h-10 w-10 items-center justify-center border border-white/20 text-slate-300 transition-colors hover:border-[#51E5FF] hover:text-[#51E5FF] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#51E5FF]"
+                      >
+                        <Icon size={17} aria-hidden="true" />
+                      </a>
+                    ))}
+                  </div>
+                )}
+
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {externalLinks.map(({ label, href }) => (
+                    <a
+                      key={label}
+                      href={href}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex min-h-[36px] items-center gap-2 border border-white/15 px-3 text-[11px] font-bold uppercase tracking-[0.14em] text-slate-400 transition-colors hover:border-[#51E5FF] hover:text-[#51E5FF]"
+                    >
+                      {label}
+                      <AiOutlineArrowRight size={12} aria-hidden="true" />
+                    </a>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
@@ -544,7 +641,7 @@ const CastDetails = () => {
         </div>
       </section>
 
-      <nav className="sticky top-[92px] z-30 border-y border-white/10 bg-[#04152d]/95 backdrop-blur-sm">
+      <nav className="sticky top-[76px] z-30 border-y border-white/10 bg-[#04152d]/95 backdrop-blur-sm sm:top-[92px]">
         <div className="mx-auto flex max-w-[1400px] gap-6 overflow-x-auto px-5 sm:px-8 lg:px-12">
           {[
             { href: "#known-for", label: "Known for" },
@@ -652,8 +749,8 @@ const CastDetails = () => {
             description="Selected acting credits across film and television."
           />
 
-          <div className="mt-9 grid gap-8 lg:grid-cols-[220px_minmax(0,1fr)]">
-            <aside className="space-y-6">
+          <div className="mt-9 grid grid-cols-[minmax(0,1fr)] gap-8 lg:grid-cols-[220px_minmax(0,1fr)]">
+            <aside className="min-w-0 space-y-6">
               <div className="border border-white/10 bg-[#0a1b31] p-4">
                 <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-[#51E5FF]">
                   Refine
@@ -980,6 +1077,59 @@ const CastDetails = () => {
           </div>
         </div>
       </section>
+
+      {showBio && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[#020a16]/95 p-4 backdrop-blur-md sm:p-8"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="cast-bio-title"
+          onClick={() => setShowBio(false)}
+        >
+          <div
+            className="relative max-h-[85vh] w-full max-w-2xl overflow-y-auto border border-white/15 bg-[#04152d] p-5 shadow-2xl shadow-black/60 sm:p-8"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => setShowBio(false)}
+              aria-label="Close biography"
+              className="absolute right-4 top-4 z-10 flex h-10 w-10 items-center justify-center border border-white/20 bg-[#04152d]/85 text-white transition-colors hover:border-[#51E5FF] hover:text-[#51E5FF]"
+            >
+              <AiOutlineClose size={18} aria-hidden="true" />
+            </button>
+
+            <div className="flex items-start gap-4 pr-12">
+              <div className="relative aspect-[3/4] w-16 shrink-0 overflow-hidden border border-white/20 bg-[#0a1b31] sm:w-20">
+                <Image
+                  src={profileSrc}
+                  alt=""
+                  fill
+                  sizes="80px"
+                  className="object-cover object-top"
+                />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-[#51E5FF]">
+                  Biography
+                </p>
+                <h2
+                  id="cast-bio-title"
+                  className="mt-2 text-2xl font-extrabold tracking-tight text-white sm:text-3xl"
+                >
+                  {data.name || "Unknown"}
+                </h2>
+              </div>
+            </div>
+
+            <div className="mt-6 border-t border-white/10 pt-6">
+              <p className="whitespace-pre-line text-sm leading-relaxed text-slate-300 sm:text-base">
+                {data.biography}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {activePhoto !== null && photos[activePhoto] && (
         <div

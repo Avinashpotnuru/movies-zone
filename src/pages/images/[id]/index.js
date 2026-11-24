@@ -1,3 +1,4 @@
+import ApiProvider from "@/components/ApiProvider";
 import Seo from "@/components/Seo";
 import ImagesComponent from "@/components/ImagesComponent";
 import { absoluteUrl, tmdbImageUrl, truncate } from "@/config/site";
@@ -37,12 +38,18 @@ const ImagesPage = ({ id, meta, images }) => {
             : undefined,
         }}
       />
-      <ImagesComponent id={id} meta={meta} />
+      <ApiProvider>
+        <ImagesComponent id={id} meta={meta} />
+      </ApiProvider>
     </>
   );
 };
 
-export const getServerSideProps = async ({ params }) => {
+export async function getStaticPaths() {
+  return { paths: [], fallback: "blocking" };
+}
+
+export const getStaticProps = async ({ params }) => {
   const rawId = params.id;
   const id = Array.isArray(rawId) ? rawId[0] : rawId;
 
@@ -77,6 +84,7 @@ export const getServerSideProps = async ({ params }) => {
         : null,
       images,
     },
+    revalidate: movie ? 3600 : 60,
   };
 };
 

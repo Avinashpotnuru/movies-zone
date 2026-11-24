@@ -1,11 +1,21 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 import {
   useAddFavoritesMutation,
   useGetFavoriteMoviesQuery,
 } from "@/store/api/restApis";
 
-const useFavoriteToggle = () => {
+const FavoritesContext = createContext(null);
+
+const useFavoriteToggleState = () => {
   const { data } = useGetFavoriteMoviesQuery();
   const [addFavorite] = useAddFavoritesMutation();
 
@@ -76,7 +86,27 @@ const useFavoriteToggle = () => {
     [addFavorite, favoriteIds]
   );
 
-  return { isFavorite, toggleFavorite };
+  return useMemo(
+    () => ({ isFavorite, toggleFavorite }),
+    [isFavorite, toggleFavorite]
+  );
+};
+
+export const FavoritesProvider = ({ children }) => {
+  const value = useFavoriteToggleState();
+  return (
+    <FavoritesContext.Provider value={value}>
+      {children}
+    </FavoritesContext.Provider>
+  );
+};
+
+const useFavoriteToggle = () => {
+  const context = useContext(FavoritesContext);
+  if (!context) {
+    throw new Error("useFavoriteToggle must be used inside FavoritesProvider");
+  }
+  return context;
 };
 
 export default useFavoriteToggle;

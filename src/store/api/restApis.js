@@ -17,7 +17,7 @@ const restApi = createApi({
     },
   }),
 
-  tagTypes: ["Movies"],
+  tagTypes: ["Favorites"],
 
   endpoints: (builder) => ({
     addFavorites: builder.mutation({
@@ -27,12 +27,11 @@ const restApi = createApi({
 
         body: data,
       }),
-      invalidatesTags: ["Movies"],
+      invalidatesTags: ["Favorites"],
     }),
 
     getMovies: builder.query({
       query: (data) => `movie/${data.tab}?page=${data.pageId}`,
-      providesTags: ["Movies"],
     }),
 
     discoverMovies: builder.query({
@@ -72,12 +71,10 @@ const restApi = createApi({
 
         return `discover/movie?${params.toString()}`;
       },
-      providesTags: ["Movies"],
     }),
     getMovieFullDetailsById: builder.query({
       query: (data) =>
-        `movie/${data.id}?append_to_response=credits,similar,videos,watch/providers `,
-      providesTags: ["Movies"],
+        `movie/${data.id}?append_to_response=credits,similar,videos`,
     }),
 
     getSearchMovies: builder.query({
@@ -85,36 +82,30 @@ const restApi = createApi({
         `search/movie?query=${encodeURIComponent(
           data.searchInput || ""
         )}&include_adult=false&page=${data.pageId || 1}`,
-      providesTags: ["Movies"],
     }),
 
     getMovieImages: builder.query({
       query: (data) => `movie/${data.id}/images`,
-      providesTags: ["Movies"],
     }),
 
     getFavoriteMovies: builder.query({
-      query: (data) => `account/20236627/favorite/movies`,
-      providesTags: ["Movies"],
+      query: () => `account/20236627/favorite/movies`,
+      providesTags: ["Favorites"],
     }),
     getGenres: builder.query({
       query: () => `genre/movie/list`,
-      providesTags: ["Movies"],
     }),
     getGenresMovies: builder.query({
       query: (data) =>
         `discover/movie?include_adult=false&include_video=false&language=en-US&page=${data.pageId}&sort_by=popularity.desc&with_genres=${data.id}`,
-      providesTags: ["Movies"],
     }),
     getTrendingMovies: builder.query({
       query: (data) => `trending/movie/${data?.trending}`,
-      providesTags: ["Movies"],
     }),
 
     getCastFullDetails: builder.query({
       query: (data) =>
         `person/${data?.id}?append_to_response=combined_credits,external_ids,images`,
-      providesTags: ["Movies"],
     }),
   }),
 });

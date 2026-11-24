@@ -2,8 +2,10 @@
 
 import dynamic from "next/dynamic";
 
+import ApiProvider from "@/components/ApiProvider";
 import Seo from "@/components/Seo";
 import { absoluteUrl, tmdbImageUrl, truncate } from "@/config/site";
+import { FavoritesProvider } from "@/hooks/useFavoriteToggle";
 
 //import components
 const MovieDetails = dynamic(() => import("@/components/MovieDetails"), {
@@ -50,12 +52,20 @@ const MoviesDetailsPage = ({ id, meta }) => {
               : undefined,
         }}
       />
-      <MovieDetails />
+      <ApiProvider>
+        <FavoritesProvider>
+          <MovieDetails />
+        </FavoritesProvider>
+      </ApiProvider>
     </>
   );
 };
 
-export const getServerSideProps = async ({ params }) => {
+export async function getStaticPaths() {
+  return { paths: [], fallback: "blocking" };
+}
+
+export const getStaticProps = async ({ params }) => {
   const rawId = params.id;
   const id = Array.isArray(rawId) ? rawId[0] : rawId;
 
@@ -79,6 +89,7 @@ export const getServerSideProps = async ({ params }) => {
           }
         : null,
     },
+    revalidate: movie ? 3600 : 60,
   };
 };
 

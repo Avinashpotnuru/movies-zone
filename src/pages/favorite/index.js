@@ -1,5 +1,13 @@
+import dynamic from "next/dynamic";
+
+import ApiProvider from "@/components/ApiProvider";
+import LoadingRing from "@/components/LoadingRing";
 import Seo from "@/components/Seo";
-import Favorites from "@/components/Favorites";
+
+const Favorites = dynamic(() => import("@/components/Favorites"), {
+  ssr: false,
+  loading: () => <LoadingRing label="favorites-loading" />,
+});
 
 const FavoritePage = () => {
   return (
@@ -10,7 +18,9 @@ const FavoritePage = () => {
         path="/favorite"
         noindex
       />
-      <Favorites />
+      <ApiProvider>
+        <Favorites />
+      </ApiProvider>
     </>
   );
 };

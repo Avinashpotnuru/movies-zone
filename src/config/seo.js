@@ -4,17 +4,31 @@ import { tmdbImageUrl } from "@/config/site";
 const baseUrl = process.env.NEXT_PUBLIC_BACKEND_BASEURL;
 const apiKey = process.env.NEXT_PUBLIC_BACKEND_BASEURL_API_KEY;
 
-const fetchJson = async (endpoint) => {
+const retryDelay = (attempt) => 150 * (attempt + 1);
+const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const fetchJson = async (endpoint, attempt = 0) => {
   if (!baseUrl || !apiKey) return null;
+
+  const retry = async () => {
+    if (attempt >= 2) return null;
+    await wait(retryDelay(attempt));
+    return fetchJson(endpoint, attempt + 1);
+  };
+
   try {
     const response = await fetch(
       `${baseUrl.replace(/\/$/, "")}/${endpoint.replace(/^\//, "")}`,
       { headers: { authorization: `Bearer ${apiKey}` } }
     );
-    if (!response.ok) return null;
+    if (!response.ok) {
+      return response.status >= 500 || response.status === 429
+        ? retry()
+        : null;
+    }
     return await response.json();
   } catch {
-    return null;
+    return retry();
   }
 };
 

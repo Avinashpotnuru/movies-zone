@@ -1,9 +1,10 @@
 import dynamic from "next/dynamic";
 import React from "react";
 
+import ApiProvider from "@/components/ApiProvider";
 import LoadingRing from "@/components/LoadingRing";
 import Seo from "@/components/Seo";
-import { getCollection } from "@/config/collections";
+import { COLLECTIONS, getCollection } from "@/config/collections";
 import { absoluteUrl, truncate } from "@/config/site";
 
 const Specials = dynamic(() => import("@/components/SpecialsComponent"), {
@@ -38,12 +39,21 @@ const SpecialsPage = ({ page, meta }) => {
           numberOfItems: meta?.totalResults || 0,
         }}
       />
-      <Specials />
+      <ApiProvider>
+        <Specials />
+      </ApiProvider>
     </>
   );
 };
 
-export const getServerSideProps = async ({ params }) => {
+export async function getStaticPaths() {
+  return {
+    paths: COLLECTIONS.map(({ page }) => ({ params: { page } })),
+    fallback: "blocking",
+  };
+}
+
+export const getStaticProps = async ({ params }) => {
   const rawPage = params.page;
   const page = Array.isArray(rawPage) ? rawPage[0] : rawPage;
   const code = getCollection(page)?.code;
@@ -61,6 +71,7 @@ export const getServerSideProps = async ({ params }) => {
       page,
       meta: collection ?? null,
     },
+    revalidate: collection ? 3600 : 60,
   };
 };
 
