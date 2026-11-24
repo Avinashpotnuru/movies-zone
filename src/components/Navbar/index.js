@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 
 import { useCallback, useEffect, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
 
 import {
   AiOutlineArrowRight,
@@ -16,8 +15,7 @@ import { IoMdArrowDropdown, IoMdArrowDropup } from "react-icons/io";
 import { MdOutlineFavorite } from "react-icons/md";
 
 import { COLLECTION_LINKS } from "@/config/collections";
-import { useGetGenresQuery } from "@/store/api/restApis";
-import { closeNav, openNav } from "@/store/slice/tabsSlice";
+import { POPULAR_GENRES } from "@/config/genres";
 
 import OutsideClickHandlerWrapper from "../OutsideClickHandlerWrapper";
 
@@ -94,18 +92,15 @@ const NavDropdown = ({ index, label, links, isOpen, onToggle, onClose, active })
 );
 
 const Navbar = () => {
-  const dispatch = useDispatch();
   const router = useRouter();
   const path = router.pathname;
 
+  const [navOpen, setNavOpen] = useState(false);
   const [categoriesOpen, setCategoriesOpen] = useState(false);
   const [specialsOpen, setSpecialsOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
 
-  const navOpen = useSelector((state) => state.tabsSlice.navToggle);
-  const { data: genresData } = useGetGenresQuery();
-
-  const categoryLinks = (genresData?.genres ?? []).map((genre) => ({
+  const categoryLinks = POPULAR_GENRES.map((genre) => ({
     id: genre.id,
     label: genre.name,
     href: `/category/${genre.id}`,
@@ -117,11 +112,11 @@ const Navbar = () => {
   }));
 
   const closeAll = useCallback(() => {
-    dispatch(closeNav());
+    setNavOpen(false);
     setCategoriesOpen(false);
     setSpecialsOpen(false);
     setSearchOpen(false);
-  }, [dispatch]);
+  }, []);
 
   const closeSearch = useCallback(() => setSearchOpen(false), []);
 
@@ -136,11 +131,11 @@ const Navbar = () => {
   );
 
   const openSearch = useCallback(() => {
-    dispatch(closeNav());
+    setNavOpen(false);
     setCategoriesOpen(false);
     setSpecialsOpen(false);
     setSearchOpen(true);
-  }, [dispatch]);
+  }, []);
 
   useEffect(() => {
     closeAll();
@@ -194,7 +189,7 @@ const Navbar = () => {
             </span>
           </Link>
 
-          <nav className="hidden items-center gap-8 lg:flex">
+          <nav className="hidden items-center gap-6 lg:flex xl:gap-8">
             <NavDropdown
               index="01"
               label="Categories"
@@ -236,6 +231,23 @@ const Navbar = () => {
                 }`}
               />
             </Link>
+            <Link
+              href="/about"
+              onClick={closeAll}
+              className={`group relative flex h-11 items-center gap-2 text-[13px] font-bold uppercase tracking-[0.14em] transition-colors duration-200 hover:text-[#51E5FF] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#51E5FF] ${
+                path === "/about" ? "text-[#51E5FF]" : "text-white"
+              }`}
+            >
+              <span className="text-[10px] font-semibold text-[#51E5FF]/60 tabular-nums">
+                04
+              </span>
+              About
+              <span
+                className={`absolute -bottom-0.5 left-0 h-px w-full origin-left bg-[#51E5FF] transition-transform duration-300 ${
+                  path === "/about" ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"
+                }`}
+              />
+            </Link>
           </nav>
 
           <div className="flex items-center gap-2">
@@ -243,17 +255,24 @@ const Navbar = () => {
               type="button"
               onClick={openSearch}
               aria-label="Open search"
-              className="flex h-10 items-center gap-3 border border-white/15 px-3 text-sm text-slate-300 transition-colors duration-200 hover:border-[#51E5FF]/60 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#51E5FF]"
+              aria-keyshortcuts="Meta+K Control+K"
+              className="group flex h-10 w-10 items-center justify-center border border-white/15 bg-white/[0.03] text-slate-300 transition-colors duration-200 hover:border-[#51E5FF]/60 hover:bg-[#51E5FF]/[0.06] hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#51E5FF] lg:h-11 lg:w-[180px] lg:justify-start lg:gap-2.5 lg:px-3 xl:w-[240px]"
             >
-              <AiOutlineSearch size={18} aria-hidden="true" />
-              <span className="hidden lg:inline">Search movies</span>
-              <kbd className="hidden border border-white/15 px-1.5 py-0.5 text-[10px] font-semibold text-slate-400 lg:inline">
+              <AiOutlineSearch
+                size={18}
+                aria-hidden="true"
+                className="shrink-0 text-[#51E5FF] transition-transform duration-200 group-hover:scale-110"
+              />
+              <span className="hidden flex-1 text-left text-sm text-slate-400 lg:inline">
+                Search movies…
+              </span>
+              <kbd className="hidden border border-white/15 bg-[#04152d] px-1.5 py-0.5 text-[10px] font-semibold text-slate-400 xl:inline">
                 ⌘ K
               </kbd>
             </button>
             <button
               type="button"
-              onClick={() => (navOpen ? dispatch(closeNav()) : dispatch(openNav()))}
+              onClick={() => setNavOpen((prev) => !prev)}
               aria-label={navOpen ? "Close menu" : "Open menu"}
               aria-expanded={navOpen}
               className="flex h-10 w-10 items-center justify-center border border-white/15 text-white transition-colors duration-200 hover:border-[#51E5FF]/60 hover:text-[#51E5FF] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#51E5FF] lg:hidden"
@@ -288,10 +307,13 @@ const Navbar = () => {
               <button
                 type="button"
                 onClick={openSearch}
-                className="flex h-11 w-full items-center gap-3 border border-white/15 px-4 text-sm text-slate-300 transition-colors hover:border-[#51E5FF]/60 hover:text-white"
+                className="flex h-12 w-full items-center gap-3 border border-white/15 bg-white/[0.04] px-4 text-left text-sm text-slate-400 transition-colors hover:border-[#51E5FF]/60 hover:bg-[#51E5FF]/[0.06] hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#51E5FF]"
               >
-                <AiOutlineSearch size={18} aria-hidden="true" />
-                Search movies
+                <AiOutlineSearch size={18} aria-hidden="true" className="shrink-0 text-[#51E5FF]" />
+                <span className="flex-1">Search movies…</span>
+                <kbd className="border border-white/15 bg-[#04152d] px-1.5 py-0.5 text-[10px] font-semibold text-slate-400">
+                  ⌘ K
+                </kbd>
               </button>
 
               <div className="mt-4 space-y-1">
@@ -309,6 +331,22 @@ const Navbar = () => {
                   </span>
                   <span className="text-[10px] text-[#51E5FF]/60 tabular-nums">
                     03
+                  </span>
+                </Link>
+
+                <Link
+                  href="/about"
+                  onClick={(event) => {
+                    event.preventDefault();
+                    navigateAndClose("/about");
+                  }}
+                  className="flex min-h-[44px] items-center justify-between border-b border-white/10 text-sm font-bold uppercase tracking-[0.14em] text-white transition-colors hover:text-[#51E5FF]"
+                >
+                  <span className="flex items-center gap-2">
+                    <span className="text-[10px] text-[#51E5FF]/60 tabular-nums">
+                      04
+                    </span>
+                    About &amp; FAQ
                   </span>
                 </Link>
 

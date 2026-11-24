@@ -2,8 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
 
-import { useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useEffect, useState } from "react";
 
 import {
   AiFillStar,
@@ -12,7 +11,6 @@ import {
 } from "react-icons/ai";
 import { getGenreNote } from "@/config/genres";
 import { useGetGenresMoviesQuery, useGetGenresQuery } from "@/store/api/restApis";
-import { tabsHandler } from "@/store/slice/tabsSlice";
 import { backdropPath, imagePath } from "@/utilities";
 
 import LoadingRing from "../LoadingRing";
@@ -264,8 +262,7 @@ const RelatedGenreTile = ({ genre, index, feature }) => {
 
 const Genres = () => {
   const router = useRouter();
-  const dispatch = useDispatch();
-  const pageId = Number(useSelector((state) => state.tabsSlice.tabs)) || 1;
+  const [pageId, setPageId] = useState(1);
 
   const rawId = router.query.id;
   const genreId = Array.isArray(rawId) ? rawId[0] : rawId;
@@ -284,14 +281,14 @@ const Genres = () => {
   } = useGetGenresMoviesQuery({ id: genreId, pageId }, { skip: !ready });
 
   useEffect(() => {
-    if (ready) dispatch(tabsHandler(1));
-  }, [ready, genreId, dispatch]);
+    setPageId(1);
+  }, [genreId]);
 
   useEffect(() => {
     if (data?.total_pages && pageId > data.total_pages) {
-      dispatch(tabsHandler(1));
+      setPageId(1);
     }
-  }, [data?.total_pages, pageId, dispatch]);
+  }, [data?.total_pages, pageId]);
 
   if (!ready || genresLoading || (moviesLoading && !data)) return <Loader />;
 
@@ -506,7 +503,7 @@ const Genres = () => {
         <Pagination
           pages={totalPages}
           current={pageId}
-          onChange={(page) => dispatch(tabsHandler(page))}
+          onChange={setPageId}
         />
       </section>
 

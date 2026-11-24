@@ -1,6 +1,7 @@
 import dynamic from "next/dynamic";
 import React from "react";
 
+import ApiProvider from "@/components/ApiProvider";
 import LoadingRing from "@/components/LoadingRing";
 import Seo from "@/components/Seo";
 import { absoluteUrl, truncate } from "@/config/site";
@@ -37,12 +38,18 @@ const CategoryPage = ({ id, meta }) => {
           numberOfItems: meta?.totalResults || 0,
         }}
       />
-      <Genres />
+      <ApiProvider>
+        <Genres />
+      </ApiProvider>
     </>
   );
 };
 
-export const getServerSideProps = async ({ params }) => {
+export async function getStaticPaths() {
+  return { paths: [], fallback: "blocking" };
+}
+
+export const getStaticProps = async ({ params }) => {
   const rawId = params.id;
   const id = Array.isArray(rawId) ? rawId[0] : rawId;
 
@@ -64,6 +71,7 @@ export const getServerSideProps = async ({ params }) => {
         totalResults: collection?.totalResults || 0,
       },
     },
+    revalidate: genre ? 3600 : 60,
   };
 };
 

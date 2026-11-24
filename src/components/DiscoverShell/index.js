@@ -1,4 +1,4 @@
-import { Fragment } from "react";
+import { Fragment, memo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -108,7 +108,7 @@ export const DiscoverHero = ({
     )}
     <div className="absolute inset-0 bg-[#04152d]/65" aria-hidden="true" />
 
-    <div className="relative z-10 mx-auto max-w-[1400px] px-5 pb-12 pt-10 sm:px-8 lg:px-12 lg:pb-16 lg:pt-12">
+    <div className="relative z-10 mx-auto max-w-[1400px] px-5 pb-10 pt-6 sm:px-8 lg:px-12 lg:pb-14 lg:pt-8">
       {breadcrumb.length > 0 && (
         <nav
           aria-label="Breadcrumb"
@@ -307,42 +307,46 @@ export const DiscoverErrorState = ({
   </div>
 );
 
-export const MoviePosterCard = ({
+export const MoviePosterCard = memo(function MoviePosterCard({
   movie,
   sizes = "(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw",
-}) => (
-  <Link
-    href={`/movies/${movie.id}`}
-    className="group block border border-white/10 bg-[#0a1b31] transition-colors duration-300 hover:border-[#51E5FF]/50"
-  >
-    <div className="relative aspect-[2/3] overflow-hidden bg-[#04152d]">
-      <Image
-        src={movie.poster_path ? `${imagePath}${movie.poster_path}` : "/noimage.png"}
-        alt={movie.title ? `${movie.title} poster` : ""}
-        fill
-        sizes={sizes}
-        className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-      />
-      {movie.vote_average > 0 && (
-        <span className="absolute right-2 top-2 inline-flex items-center gap-1 bg-[#04152d]/90 px-2 py-1 text-xs font-bold text-[#51E5FF] tabular-nums">
-          <AiFillStar size={12} aria-hidden="true" />
-          {Number(movie.vote_average).toFixed(1)}
-        </span>
-      )}
-    </div>
-    <div className="p-3">
-      <h3
-        title={movie.title}
-        className="line-clamp-1 text-sm font-bold text-white transition-colors group-hover:text-[#51E5FF]"
-      >
-        {movie.title}
-      </h3>
-      <p className="mt-1 text-xs text-slate-500 tabular-nums">
-        {movie.release_date?.slice(0, 4) ?? "—"} · Movie
-      </p>
-      <p className="mt-2 line-clamp-2 h-8 text-[11px] leading-4 text-slate-400 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-        {movie.overview || "No overview available."}
-      </p>
-    </div>
-  </Link>
-);
+}) {
+  return (
+    <Link
+      href={`/movies/${movie.id}`}
+      className="group block border border-white/10 bg-[#0a1b31] transition-colors duration-300 hover:border-[#51E5FF]/50"
+    >
+      <div className="relative aspect-[2/3] overflow-hidden bg-[#04152d]">
+        <Image
+          src={
+            movie.poster_path ? `${imagePath}${movie.poster_path}` : "/noimage.png"
+          }
+          alt={movie.title ? `${movie.title} poster` : ""}
+          fill
+          sizes={sizes}
+          className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+        />
+        {movie.vote_average > 0 && (
+          <span className="absolute right-2 top-2 inline-flex items-center gap-1 bg-[#04152d]/90 px-2 py-1 text-xs font-bold text-[#51E5FF] tabular-nums">
+            <AiFillStar size={12} aria-hidden="true" />
+            {Number(movie.vote_average).toFixed(1)}
+          </span>
+        )}
+      </div>
+      <div className="p-3">
+        <h3
+          title={movie.title}
+          className="line-clamp-1 text-sm font-bold text-white transition-colors group-hover:text-[#51E5FF]"
+        >
+          {movie.title}
+        </h3>
+        <p className="mt-1 text-xs text-slate-500 tabular-nums">
+          {movie.release_date?.slice(0, 4) ?? "—"} · Movie
+        </p>
+        <p className="mt-2 line-clamp-2 h-8 text-[11px] leading-4 text-slate-400 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+          {movie.overview || "No overview available."}
+        </p>
+      </div>
+    </Link>
+  );
+});

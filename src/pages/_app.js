@@ -1,9 +1,20 @@
 import "@/styles/globals.css";
-import { Provider } from "react-redux";
-
-import { store } from "@/store/store";
-import Layout from "@/components/Layout";
+import { Inter, Space_Grotesk } from "next/font/google";
 import Head from "next/head";
+
+import Layout from "@/components/Layout";
+
+const inter = Inter({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-body",
+});
+
+const spaceGrotesk = Space_Grotesk({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-display",
+});
 
 export default function App({ Component, pageProps }) {
   return (
@@ -17,14 +28,17 @@ export default function App({ Component, pageProps }) {
           sizes="any"
         />
         <meta name="theme-color" content="#04152d" />
+        <link rel="preconnect" href="https://image.tmdb.org" />
+        <link rel="dns-prefetch" href="https://image.tmdb.org" />
+        <link rel="preconnect" href="https://www.youtube-nocookie.com" />
       </Head>
-      <Provider store={store}>
-        <div className="overflow-x-container">
-          <Layout>
-            <Component {...pageProps} />
-          </Layout>
-        </div>
-      </Provider>
+      <div
+        className={`app-shell overflow-x-container ${inter.variable} ${spaceGrotesk.variable}`}
+      >
+        <Layout>
+          <Component {...pageProps} />
+        </Layout>
+      </div>
     </>
   );
 }

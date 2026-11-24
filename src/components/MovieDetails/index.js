@@ -123,7 +123,7 @@ const SectionHeading = ({ eyebrow, title, description }) => (
 );
 
 const Stat = ({ label, value, accent }) => (
-  <div className="border-l border-white/10 px-4 first:border-l-0 first:pl-0">
+  <div className="border-white/10 px-4 sm:border-l sm:first:border-l-0 sm:first:pl-0">
     <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">
       {label}
     </p>
@@ -480,7 +480,7 @@ const MovieDetails = () => {
         <div className="absolute inset-0 bg-[#04152d]/60" />
         <div className="absolute inset-0 bg-gradient-to-t from-[#04152d] via-[#04152d]/40 to-transparent" />
 
-        <div className="relative z-10 mx-auto max-w-[1400px] px-5 pb-14 pt-28 sm:px-8 lg:px-12 lg:pb-20 lg:pt-32">
+        <div className="relative z-10 mx-auto max-w-[1400px] px-5 pb-12 pt-16 sm:px-8 lg:px-12 lg:pb-16 lg:pt-20">
           <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.22em] text-slate-400">
             <Link
               href="/"
@@ -497,34 +497,48 @@ const MovieDetails = () => {
             </span>
           </div>
 
-          <div className="mt-8 grid grid-cols-[104px_minmax(0,1fr)] gap-5 sm:grid-cols-[150px_minmax(0,1fr)] sm:gap-8 lg:grid-cols-[300px_minmax(0,1fr)] lg:items-end lg:gap-12 xl:grid-cols-[340px_minmax(0,1fr)]">
-            <div className="relative aspect-[2/3] overflow-hidden border border-white/20 bg-[#0a1b31] shadow-2xl shadow-black/50">
+          <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-[150px_minmax(0,1fr)] sm:gap-8 lg:grid-cols-[300px_minmax(0,1fr)] lg:items-end lg:gap-12 xl:grid-cols-[340px_minmax(0,1fr)]">
+            <div className="relative hidden aspect-[2/3] overflow-hidden border border-white/20 bg-[#0a1b31] shadow-2xl shadow-black/50 sm:block">
               <Image
                 src={posterSrc}
                 alt={data.title ? `${data.title} poster` : "Movie poster"}
                 fill
                 priority
-                sizes="(max-width: 640px) 104px, (max-width: 1024px) 150px, 340px"
+                sizes="(max-width: 1024px) 150px, 340px"
                 className="object-cover"
               />
             </div>
 
-            <div>
+            <div className="min-w-0">
+              {/* Mobile: the poster floats beside the title so the overview and
+                  action buttons get the full width instead of a cramped column. */}
+              <div className="float-left mr-4 mb-2 w-24 sm:hidden">
+                <div className="relative aspect-[2/3] overflow-hidden border border-white/20 bg-[#0a1b31] shadow-xl shadow-black/50">
+                  <Image
+                    src={posterSrc}
+                    alt={data.title ? `${data.title} poster` : "Movie poster"}
+                    fill
+                    priority
+                    sizes="96px"
+                    className="object-cover"
+                  />
+                </div>
+              </div>
+
               <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-[#51E5FF]">
                 Feature film · {year}
               </p>
-              <h1
-                className="mt-4 font-extrabold leading-[0.95] tracking-[-0.04em] text-white"
-                style={{ fontSize: "clamp(2rem, 4.6vw, 4rem)" }}
-              >
+              <h1 className="mt-4 text-[clamp(1.75rem,6.5vw,2.25rem)] font-extrabold leading-[1.02] tracking-[-0.04em] text-white sm:text-[clamp(2rem,4.6vw,4rem)] sm:leading-[0.95]">
                 {data.title || "Untitled"}
               </h1>
 
               {data.tagline && (
-                <p className="mt-3 text-base font-semibold text-slate-300 sm:text-lg">
+                <p className="mt-3 text-sm font-semibold leading-snug text-slate-300 sm:text-lg sm:leading-normal">
                   “{data.tagline}”
                 </p>
               )}
+
+              <div className="clear-both sm:hidden" />
 
               <p className="mt-5 line-clamp-4 max-w-2xl text-sm leading-relaxed text-slate-300 sm:text-base">
                 {data.overview || "No overview available for this title."}
@@ -634,7 +648,7 @@ const MovieDetails = () => {
         </div>
       </section>
 
-      <nav className="sticky top-[92px] z-30 border-y border-white/10 bg-[#04152d]/95 backdrop-blur-sm">
+      <nav className="sticky top-[76px] z-30 border-y border-white/10 bg-[#04152d]/95 backdrop-blur-sm sm:top-[88px]">
         <div className="mx-auto flex max-w-[1400px] gap-6 overflow-x-auto px-5 sm:px-8 lg:px-12">
           {[
             { href: "#cast", label: "Cast & crew" },
