@@ -2,26 +2,76 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
 
+import { useCallback, useEffect, useRef, useState } from "react";
+
 import {
   AiFillStar,
   AiOutlineArrowLeft,
   AiOutlineArrowRight,
+  AiOutlineClose,
 } from "react-icons/ai";
 import { BsFillPlayFill } from "react-icons/bs";
 import { MdFavorite, MdOutlineFavorite } from "react-icons/md";
-import { ProgressBar } from "react-loader-spinner";
 
 import useFavoriteToggle from "@/hooks/useFavoriteToggle";
 import { useGetMovieFullDetailsByIdQuery } from "@/store/api/restApis";
 import { backdropPath, imagePath } from "@/utilities";
 
 import CastCard from "../CastCard";
+import LoadingRing from "../LoadingRing";
 
 const MAX_CAST = 12;
+const MAX_CREW = 8;
 const MAX_VIDEOS = 7;
 const MAX_SIMILAR = 10;
 
 const pad = (value) => String(value ?? 0).padStart(2, "0");
+
+const dateFormatter = new Intl.DateTimeFormat("en-US", {
+  year: "numeric",
+  month: "long",
+  day: "numeric",
+});
+const currencyFormatter = new Intl.NumberFormat("en-US", {
+  style: "currency",
+  currency: "USD",
+  maximumFractionDigits: 0,
+});
+
+const formatDate = (value) => {
+  if (!value) return "—";
+  const parsed = new Date(`${value}T00:00:00`);
+  return Number.isNaN(parsed.getTime()) ? value : dateFormatter.format(parsed);
+};
+
+const formatMoney = (value) =>
+  value > 0 ? currencyFormatter.format(value) : "—";
+
+const formatLanguage = (code) => {
+  if (!code) return "—";
+  try {
+    return (
+      new Intl.DisplayNames(["en"], { type: "language" }).of(code) ||
+      code.toUpperCase()
+    );
+  } catch {
+    return code.toUpperCase();
+  }
+};
+
+const homepageInfo = (url) => {
+  if (!url) return { href: null, label: "—" };
+  try {
+    const parsed = new URL(url);
+    if (!/^https?:$/.test(parsed.protocol)) return { href: null, label: "—" };
+    return {
+      href: parsed.href,
+      label: parsed.hostname.replace(/^www\./, ""),
+    };
+  } catch {
+    return { href: null, label: "—" };
+  }
+};
 
 const PRIORITY_CREW_JOBS = [
   "Director",
@@ -33,19 +83,7 @@ const PRIORITY_CREW_JOBS = [
   "Editor",
 ];
 
-const Loader = () => (
-  <div className="flex min-h-[70vh] items-center justify-center bg-[#04152d]">
-    <ProgressBar
-      height="80"
-      width="80"
-      ariaLabel="progress-bar-loading"
-      wrapperStyle={{}}
-      wrapperClass="progress-bar-wrapper"
-      borderColor="#F4442E"
-      barColor="#51E5FF"
-    />
-  </div>
-);
+const Loader = () => <LoadingRing label="movie-loading" />;
 
 const ErrorState = () => (
   <div className="flex min-h-[70vh] flex-col items-center justify-center gap-4 bg-[#04152d] px-5 text-center text-white">
@@ -99,13 +137,35 @@ const Stat = ({ label, value, accent }) => (
   </div>
 );
 
-const VideoFeature = ({ video }) => (
-  <a
-    href={`https://www.youtube.com/watch?v=${video.key}`}
-    target="_blank"
-    rel="noreferrer"
-    aria-label={`Watch ${video.name || "video"} on YouTube`}
-    className="group block border border-white/10 bg-[#04152d] transition-colors duration-300 hover:border-[#51E5FF]/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#51E5FF]"
+const Fact = ({ label, value, href }) => (
+  <div className="min-w-0">
+    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">
+      {label}
+    </p>
+    {href ? (
+      <a
+        href={href}
+        target="_blank"
+        rel="noreferrer"
+        className="mt-2 inline-flex max-w-full items-center gap-2 text-sm font-bold text-[#51E5FF] transition-colors hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#51E5FF]"
+      >
+        <span className="truncate">{value}</span>
+        <AiOutlineArrowRight size={14} aria-hidden="true" />
+      </a>
+    ) : (
+      <p title={value} className="mt-2 break-words text-sm font-bold text-white">
+        {value}
+      </p>
+    )}
+  </div>
+);
+
+const VideoFeature = ({ video, onPlay }) => (
+  <button
+    type="button"
+    onClick={() => onPlay(video)}
+    aria-label={`Play ${video.name || "video"}`}
+    className="group block w-full border border-white/10 bg-[#04152d] text-left transition-colors duration-300 hover:border-[#51E5FF]/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#51E5FF]"
   >
     <div className="relative aspect-video overflow-hidden">
       <div
@@ -143,7 +203,7 @@ const VideoFeature = ({ video }) => (
 
     <div className="flex items-center justify-between gap-4 border-t border-white/10 px-5 py-3">
       <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">
-        Open on YouTube
+        Play in Movies-Zone
       </p>
       <AiOutlineArrowRight
         size={16}
@@ -151,16 +211,15 @@ const VideoFeature = ({ video }) => (
         className="text-[#51E5FF] transition-transform duration-300 group-hover:translate-x-1"
       />
     </div>
-  </a>
+  </button>
 );
 
-const VideoListRow = ({ video, index }) => (
-  <a
-    href={`https://www.youtube.com/watch?v=${video.key}`}
-    target="_blank"
-    rel="noreferrer"
-    aria-label={`Watch ${video.name || "video"} on YouTube`}
-    className="group flex items-center gap-3 border-b border-white/10 p-3 transition-colors duration-300 last:border-b-0 hover:bg-white/[0.03] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#51E5FF]"
+const VideoListRow = ({ video, index, onPlay }) => (
+  <button
+    type="button"
+    onClick={() => onPlay(video)}
+    aria-label={`Play ${video.name || "video"}`}
+    className="group flex w-full items-center gap-3 border-b border-white/10 p-3 text-left transition-colors duration-300 last:border-b-0 hover:bg-white/[0.03] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#51E5FF]"
   >
     <span className="w-6 shrink-0 text-lg font-black leading-none text-white/20 tabular-nums">
       {pad(index + 2)}
@@ -194,8 +253,96 @@ const VideoListRow = ({ video, index }) => (
       aria-hidden="true"
       className="hidden shrink-0 text-slate-600 transition-colors duration-300 group-hover:text-[#51E5FF] sm:block"
     />
-  </a>
+  </button>
 );
+
+const VideoModal = ({ video, onClose }) => {
+  const closeRef = useRef(null);
+
+  useEffect(() => {
+    if (!video) return undefined;
+
+    const previousOverflow = document.body.style.overflow;
+    const previousFocus = document.activeElement;
+    document.body.style.overflow = "hidden";
+    closeRef.current?.focus();
+
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+      previousFocus?.focus?.();
+    };
+  }, [video, onClose]);
+
+  if (!video) return null;
+
+  return (
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-[#020915]/90 p-5 backdrop-blur-sm sm:p-10"
+      onClick={onClose}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={`Video player: ${video.name || "video"}`}
+        className="border border-white/15 bg-[#04152d] shadow-2xl shadow-black/60"
+        style={{
+          width: "min(80vw, 40rem, calc(60vh * 16 / 9))",
+          maxHeight: "78vh",
+          overflowY: "auto",
+        }}
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="flex items-center justify-between gap-4 border-b border-white/10 px-4 py-3 sm:px-5 sm:py-4">
+          <div className="min-w-0">
+            <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-[#51E5FF]">
+              {video.type || "Video"} · Playing in Movies-Zone
+            </p>
+            <h2 className="mt-2 truncate text-lg font-extrabold text-white sm:text-xl">
+              {video.name || "Official video"}
+            </h2>
+          </div>
+          <button
+            ref={closeRef}
+            type="button"
+            onClick={onClose}
+            aria-label="Close video player"
+            className="flex h-9 w-9 shrink-0 items-center justify-center border border-white/20 text-white transition-colors hover:border-[#F4442E] hover:text-[#F4442E] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#51E5FF]"
+          >
+            <AiOutlineClose size={18} aria-hidden="true" />
+          </button>
+        </div>
+
+        <div className="relative aspect-video w-full bg-black">
+          <iframe
+            key={video.key}
+            src={`https://www.youtube-nocookie.com/embed/${encodeURIComponent(
+              video.key
+            )}?autoplay=1&rel=0&modestbranding=1`}
+            title={video.name || "YouTube video player"}
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowFullScreen
+            className="absolute inset-0 h-full w-full border-0"
+          />
+        </div>
+
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 px-4 py-2.5 sm:px-5 sm:py-3">
+          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">
+            Press Escape to close
+          </p>
+          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">
+            Source · YouTube
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const SimilarCard = ({ movie }) => (
   <Link
@@ -237,6 +384,8 @@ const SimilarCard = ({ movie }) => (
 
 const MovieDetails = () => {
   const router = useRouter();
+  const [activeVideo, setActiveVideo] = useState(null);
+  const closeVideo = useCallback(() => setActiveVideo(null), []);
   const rawId = router.query.id;
   const id = Array.isArray(rawId) ? rawId[0] : rawId;
   const ready = router.isReady && Boolean(id);
@@ -267,15 +416,30 @@ const MovieDetails = () => {
   const allCrew = data.credits?.crew ?? [];
   const priorityCrew = allCrew
     .filter((person) => PRIORITY_CREW_JOBS.includes(person.job))
-    .slice(0, 6);
-  const crew = priorityCrew.length ? priorityCrew : allCrew.slice(0, 6);
+    .sort(
+      (a, b) =>
+        PRIORITY_CREW_JOBS.indexOf(a.job) -
+        PRIORITY_CREW_JOBS.indexOf(b.job)
+    );
+  const seenCrewJobs = new Set();
+  const onePerPriorityJob = priorityCrew.filter((person) => {
+    if (seenCrewJobs.has(person.job)) return false;
+    seenCrewJobs.add(person.job);
+    return true;
+  });
+  const rankedCrew = [
+    ...onePerPriorityJob,
+    ...priorityCrew.filter((person) => !onePerPriorityJob.includes(person)),
+  ];
+  const crew = rankedCrew.length
+    ? rankedCrew.slice(0, MAX_CREW)
+    : allCrew.slice(0, MAX_CREW);
 
   const videos =
     data.videos?.results
       ?.filter((video) => video.site === "YouTube" && video.key)
       .slice(0, MAX_VIDEOS) ?? [];
   const trailer = videos.find((video) => video.type === "Trailer") ?? videos[0];
-  const trailerKey = trailer?.key ?? null;
   const orderedVideos = trailer
     ? [trailer, ...videos.filter((video) => video.id !== trailer.id)]
     : videos;
@@ -286,6 +450,19 @@ const MovieDetails = () => {
   const rating = data.vote_average?.toFixed(1);
   const votes = data.vote_count ? data.vote_count.toLocaleString() : "—";
   const year = data.release_date?.slice(0, 4) ?? "—";
+  const releaseDate = formatDate(data.release_date);
+  const originalTitle = data.original_title || data.title || "—";
+  const language = formatLanguage(data.original_language);
+  const budget = formatMoney(data.budget);
+  const revenue = formatMoney(data.revenue);
+  const homepage = homepageInfo(data.homepage);
+  const companies = [
+    ...new Set(
+      (data.production_companies ?? [])
+        .map((company) => company.name)
+        .filter(Boolean)
+    ),
+  ];
 
   return (
     <div className="bg-[#04152d] text-white">
@@ -367,16 +544,15 @@ const MovieDetails = () => {
               )}
 
               <div className="mt-7 flex flex-wrap items-center gap-3">
-                {trailerKey && (
-                  <a
-                    href={`https://www.youtube.com/watch?v=${trailerKey}`}
-                    target="_blank"
-                    rel="noreferrer"
+                {trailer && (
+                  <button
+                    type="button"
+                    onClick={() => setActiveVideo(trailer)}
                     className="inline-flex min-h-[48px] items-center gap-2 bg-[#F4442E] px-6 text-sm font-bold text-white transition duration-200 ease-out hover:-translate-y-0.5 hover:bg-white hover:text-[#04152d] active:translate-y-0 active:scale-[0.97] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#F4442E]"
                   >
                     <BsFillPlayFill size={19} aria-hidden="true" />
                     Watch trailer
-                  </a>
+                  </button>
                 )}
                 <Link
                   href={`/images/${id}`}
@@ -415,6 +591,45 @@ const MovieDetails = () => {
               value={`${Math.floor(runtime / 60)}h ${runtime % 60}m`}
             />
             <Stat label="Status" value={data.status || "—"} />
+          </div>
+        </div>
+      </section>
+
+      <section className="border-y border-white/10 bg-[#061a31]">
+        <div className="mx-auto max-w-[1400px] px-5 py-12 sm:px-8 lg:px-12 lg:py-14">
+          <SectionHeading
+            eyebrow="04 / Archive"
+            title="Film facts"
+            description="The details that round out this title."
+          />
+
+          <div className="mt-8 grid grid-cols-1 gap-x-8 gap-y-6 border-t border-white/10 pt-6 sm:grid-cols-2 lg:grid-cols-3">
+            <Fact label="Release date" value={releaseDate} />
+            <Fact label="Original title" value={originalTitle} />
+            <Fact label="Original language" value={language} />
+            <Fact label="Budget" value={budget} />
+            <Fact label="Revenue" value={revenue} />
+            <Fact label="Homepage" value={homepage.label} href={homepage.href} />
+          </div>
+
+          <div className="mt-8 border-t border-white/10 pt-6">
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">
+              Production companies
+            </p>
+            {companies.length ? (
+              <div className="mt-3 flex flex-wrap gap-2">
+                {companies.map((company) => (
+                  <span
+                    key={company}
+                    className="border border-white/10 bg-[#04152d] px-3 py-2 text-xs font-semibold text-slate-300"
+                  >
+                    {company}
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <p className="mt-2 text-sm font-bold text-white">—</p>
+            )}
           </div>
         </div>
       </section>
@@ -528,7 +743,7 @@ const MovieDetails = () => {
                   : ""
               }`}
             >
-              <VideoFeature video={orderedVideos[0]} />
+              <VideoFeature video={orderedVideos[0]} onPlay={setActiveVideo} />
 
               {orderedVideos.length > 1 ? (
                 <div className="border border-white/10 bg-[#04152d]">
@@ -554,6 +769,7 @@ const MovieDetails = () => {
                         key={`${video.id}-${video.key}`}
                         video={video}
                         index={index}
+                        onPlay={setActiveVideo}
                       />
                     ))}
                   </div>
@@ -600,6 +816,8 @@ const MovieDetails = () => {
           </p>
         )}
       </section>
+
+      <VideoModal video={activeVideo} onClose={closeVideo} />
     </div>
   );
 };

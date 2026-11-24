@@ -85,6 +85,137 @@ h3 {
     }
 }
 
+/* Mobile navigation */
+.nav-enter {
+    animation: nav-drop 0.22s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes nav-drop {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+/* Movie filter drawer */
+.filter-backdrop {
+    animation: filter-fade 0.24s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.filter-drawer {
+    animation: filter-slide 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes filter-fade {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes filter-slide {
+    from {
+        opacity: 0;
+        transform: translateX(-18px);
+    }
+
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+/* Rating range */
+.dual-range {
+    position: relative;
+    height: 34px;
+}
+
+.dual-range__track,
+.dual-range__fill {
+    position: absolute;
+    top: 16px;
+    height: 3px;
+    border-radius: 999px;
+}
+
+.dual-range__track {
+    left: 0;
+    right: 0;
+    background: #1e293b;
+}
+
+.dual-range__fill {
+    background: linear-gradient(90deg, #51e5ff, #f4442e);
+}
+
+.dual-range__input {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 34px;
+    margin: 0;
+    appearance: none;
+    background: transparent;
+    pointer-events: none;
+}
+
+.dual-range__input--min {
+    color: #51e5ff;
+}
+
+.dual-range__input--max {
+    color: #f4442e;
+}
+
+.dual-range__input::-webkit-slider-runnable-track {
+    height: 3px;
+    background: transparent;
+}
+
+.dual-range__input::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    margin-top: -7px;
+    border: 2px solid #04152d;
+    border-radius: 50%;
+    background: currentColor;
+    box-shadow: 0 0 0 1px currentColor;
+    cursor: pointer;
+    pointer-events: auto;
+}
+
+.dual-range__input::-moz-range-track {
+    height: 3px;
+    background: transparent;
+}
+
+.dual-range__input::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    border: 2px solid #04152d;
+    border-radius: 50%;
+    background: currentColor;
+    box-shadow: 0 0 0 1px currentColor;
+    cursor: pointer;
+    pointer-events: auto;
+}
+
+.dual-range__input:focus-visible::-webkit-slider-thumb,
+.dual-range__input:focus-visible::-moz-range-thumb {
+    outline: 2px solid #fff;
+    outline-offset: 2px;
+}
+
 @media (prefers-reduced-motion: reduce) {
     *,
     *::before,
@@ -96,7 +227,10 @@ h3 {
     }
 
     .hero-enter,
-    .hero-poster-enter {
+    .hero-poster-enter,
+    .nav-enter,
+    .filter-backdrop,
+    .filter-drawer {
         animation: none !important;
     }
 }

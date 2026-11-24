@@ -37,7 +37,7 @@ const ImagesPage = ({ id, meta, images }) => {
             : undefined,
         }}
       />
-      <ImagesComponent id={id} />
+      <ImagesComponent id={id} meta={meta} />
     </>
   );
 };

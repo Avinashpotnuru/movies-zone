@@ -9,13 +9,15 @@ import {
   BsLinkedin,
 } from "react-icons/bs";
 
-import { useGetGenresQuery } from "@/store/api/restApis";
+import { COLLECTION_LINKS } from "@/config/collections";
 
-const specials = [
-  { label: "Hindi", href: "/special/hindi" },
-  { label: "Telugu", href: "/special/telugu" },
-  { label: "Tamil", href: "/special/tamil" },
-  { label: "Kannada", href: "/special/kannada" },
+const genres = [
+  { id: 28, name: "Action" },
+  { id: 12, name: "Adventure" },
+  { id: 16, name: "Animation" },
+  { id: 35, name: "Comedy" },
+  { id: 18, name: "Drama" },
+  { id: 878, name: "Science Fiction" },
 ];
 
 const socials = [
@@ -77,9 +79,6 @@ const FooterHeading = ({ children }) => (
 );
 
 const Footer = () => {
-  const { data } = useGetGenresQuery();
-  const genres = data?.genres?.slice(0, 6) ?? [];
-
   return (
     <footer className="relative overflow-hidden border-t border-white/10 bg-[#0a1b31] text-white">
       <div
@@ -117,7 +116,7 @@ const Footer = () => {
             </p>
 
             <Link
-              href="/#movies"
+              href="/movies"
               className="mt-7 inline-flex min-h-[46px] items-center gap-2 bg-[#51E5FF] px-5 text-sm font-bold text-[#04152d] transition duration-200 ease-out hover:-translate-y-0.5 hover:bg-white active:translate-y-0 active:scale-[0.97] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#51E5FF]"
             >
               Explore the collection
@@ -130,7 +129,7 @@ const Footer = () => {
             <div className="mt-5 flex flex-col items-start">
               <FooterLink href="/">Home</FooterLink>
               <FooterLink href="/movies">All movies</FooterLink>
-              <FooterLink href="/#movies">Movie library</FooterLink>
+              <FooterLink href="/movies">Movie library</FooterLink>
               <FooterLink href="/favorite">My favorites</FooterLink>
               <FooterLink href="/special/hindi">Regional picks</FooterLink>
             </div>
@@ -179,7 +178,7 @@ const Footer = () => {
             </div>
 
             <div className="mt-6 flex flex-wrap gap-2">
-              {specials.map((item) => (
+              {COLLECTION_LINKS.map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}

@@ -48,7 +48,7 @@ const HeroBanner = () => {
         aria-hidden="true"
       />
 
-      <div className="relative mx-auto grid min-h-[clamp(640px,82vh,780px)] max-w-[1400px] grid-cols-1 items-center gap-12 px-5 pb-28 pt-28 sm:px-8 lg:grid-cols-[1.08fr_0.92fr] lg:gap-16 lg:px-12 lg:pb-24 lg:pt-24">
+      <div className="relative mx-auto grid min-h-[clamp(640px,82vh,780px)] max-w-[1400px] grid-cols-1 items-center gap-8 px-5 pb-28 pt-10 sm:gap-12 sm:px-8 sm:pt-14 lg:grid-cols-[1.08fr_0.92fr] lg:gap-16 lg:px-12 lg:pb-24 lg:pt-24">
         <div
           key={featured?.id ?? "empty"}
           className="relative z-10"
@@ -61,11 +61,8 @@ const HeroBanner = () => {
           </p>
 
           <h1
-            className="hero-enter mt-6 line-clamp-3 font-extrabold leading-[0.95] tracking-[-0.04em] text-white"
-            style={{
-              animationDelay: "90ms",
-              fontSize: "clamp(1.75rem, 3.2vw, 3rem)",
-            }}
+            className="hero-enter mt-6 line-clamp-3 font-extrabold leading-[0.95] tracking-[-0.04em] text-white text-[clamp(2rem,9vw,3rem)] md:text-[2.25rem] lg:text-[clamp(2.5rem,3.2vw,3rem)]"
+            style={{ animationDelay: "90ms" }}
           >
             {featured?.title ??
               (isLoading ? "Loading featured films…" : "No features today")}
@@ -114,7 +111,7 @@ const HeroBanner = () => {
               </Link>
             )}
             <Link
-              href="#movies"
+              href="/movies"
               className="inline-flex min-h-[52px] items-center gap-2 border border-white/30 px-7 text-sm font-semibold text-white transition duration-200 ease-out hover:-translate-y-0.5 hover:border-[#51E5FF] hover:text-[#51E5FF] active:translate-y-0 active:scale-[0.97] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
             >
               Browse collection
@@ -122,7 +119,7 @@ const HeroBanner = () => {
           </div>
         </div>
 
-        <div className="relative z-10 mx-auto w-full max-w-[500px]">
+        <div className="relative z-10 mx-auto w-full max-w-[300px] sm:max-w-[380px] lg:max-w-[500px]">
           <div className="relative mx-auto aspect-[4/5] w-full">
             {previous && (
               <button

@@ -14,10 +14,11 @@ import {
   AiOutlineZoomIn,
 } from "react-icons/ai";
 import { BsFacebook, BsInstagram, BsTwitter } from "react-icons/bs";
-import { ProgressBar } from "react-loader-spinner";
 
 import { useGetCastFullDetailsQuery } from "@/store/api/restApis";
 import { backdropPath, imagePath } from "@/utilities";
+
+import LoadingRing from "../LoadingRing";
 
 const formatDate = (value) => {
   if (!value) return "—";
@@ -47,19 +48,7 @@ const getAge = (birthday, deathday) => {
   return age >= 0 ? age : null;
 };
 
-const Loader = () => (
-  <div className="flex min-h-[70vh] items-center justify-center bg-[#04152d]">
-    <ProgressBar
-      height="80"
-      width="80"
-      ariaLabel="profile-loading"
-      wrapperStyle={{}}
-      wrapperClass="progress-bar-wrapper"
-      borderColor="#F4442E"
-      barColor="#51E5FF"
-    />
-  </div>
-);
+const Loader = () => <LoadingRing label="profile-loading" />;
 
 const ErrorState = () => (
   <div className="flex min-h-[70vh] flex-col items-center justify-center gap-4 bg-[#04152d] px-5 text-center text-white">

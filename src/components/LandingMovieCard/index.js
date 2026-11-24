@@ -74,7 +74,9 @@ const LandingMovieCard = ({
         aria-label={saved ? "Remove from favorites" : "Add to favorites"}
         aria-pressed={saved}
         className={`absolute flex items-center justify-center border bg-[#04152d]/85 transition-colors duration-200 hover:border-[#F4442E] hover:text-[#F4442E] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#51E5FF] ${
-          compact ? "right-1.5 top-1.5 h-7 w-7" : "right-2 top-2 h-8 w-8"
+          compact
+            ? "right-1.5 top-1.5 h-9 w-9 sm:h-7 sm:w-7"
+            : "right-2 top-2 h-10 w-10 sm:h-8 sm:w-8"
         } ${
           saved
             ? "border-[#F4442E] text-[#F4442E]"

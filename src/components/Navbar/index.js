@@ -1,8 +1,9 @@
+import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
 import {
@@ -14,28 +15,15 @@ import {
 import { IoMdArrowDropdown, IoMdArrowDropup } from "react-icons/io";
 import { MdOutlineFavorite } from "react-icons/md";
 
-import useDebounce from "@/hooks/useDebounce";
-import {
-  useGetGenresQuery,
-  useGetSearchMoviesQuery,
-} from "@/store/api/restApis";
-import {
-  closeNav,
-  openNav,
-  searchHandler,
-  searchInputHandler,
-} from "@/store/slice/tabsSlice";
+import { COLLECTION_LINKS } from "@/config/collections";
+import { useGetGenresQuery } from "@/store/api/restApis";
+import { closeNav, openNav } from "@/store/slice/tabsSlice";
 
 import OutsideClickHandlerWrapper from "../OutsideClickHandlerWrapper";
-import SearchTabComponent from "../SearchTabComponent";
 
-export const specials = [
-  { name: "Hindi movies", page: "hindi", code: "hi" },
-  { name: "Telugu movies", page: "telugu", code: "te" },
-  { name: "Tamil movies", page: "tamil", code: "ta" },
-  { name: "Kannada movies", page: "kannada", code: "kn" },
-  { name: "Malayalam movies", page: "malayalam", code: "ml" },
-];
+const SearchOverlay = dynamic(() => import("../SearchOverlay"), {
+  ssr: false,
+});
 
 const NavDropdown = ({ index, label, links, isOpen, onToggle, onClose, active }) => (
   <OutsideClickHandlerWrapper onOutsideClick={onClose}>
@@ -92,7 +80,7 @@ const NavDropdown = ({ index, label, links, isOpen, onToggle, onClose, active })
             ))}
           </div>
           <Link
-            href="#movies"
+            href="/movies"
             onClick={onClose}
             className="flex items-center gap-2 border-t border-white/10 pt-3 text-xs font-bold uppercase tracking-[0.16em] text-[#51E5FF] transition-colors hover:text-white"
           >
@@ -113,28 +101,19 @@ const Navbar = () => {
   const [categoriesOpen, setCategoriesOpen] = useState(false);
   const [specialsOpen, setSpecialsOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
-  const searchInputRef = useRef(null);
 
-  const searchInput = useSelector((state) => state.tabsSlice.searchInput);
   const navOpen = useSelector((state) => state.tabsSlice.navToggle);
-  const debouncedSearch = useDebounce(searchInput, 300);
-
-  const { data: suggestionsData } = useGetSearchMoviesQuery(
-    { searchInput: debouncedSearch },
-    { skip: !debouncedSearch.trim() }
-  );
   const { data: genresData } = useGetGenresQuery();
 
-  const suggestions = suggestionsData?.results?.slice(0, 6) ?? [];
   const categoryLinks = (genresData?.genres ?? []).map((genre) => ({
     id: genre.id,
     label: genre.name,
     href: `/category/${genre.id}`,
   }));
-  const specialLinks = specials.map((item) => ({
-    id: item.page,
-    label: item.name,
-    href: `/special/${item.page}`,
+  const specialLinks = COLLECTION_LINKS.map((item) => ({
+    id: item.href,
+    label: `${item.label} movies`,
+    href: item.href,
   }));
 
   const closeAll = useCallback(() => {
@@ -144,33 +123,37 @@ const Navbar = () => {
     setSearchOpen(false);
   }, [dispatch]);
 
-  const runSearch = () => {
-    const query = searchInput.trim();
-    if (!query) return;
+  const closeSearch = useCallback(() => setSearchOpen(false), []);
 
-    dispatch(searchHandler(query));
-    dispatch(searchInputHandler(""));
-    closeAll();
-    router.push(`/search-movies/${encodeURIComponent(query)}`);
-  };
+  // Start navigation before closing so the mobile panel never unmounts its
+  // links mid-click. The path effect is a fallback close after routing.
+  const navigateAndClose = useCallback(
+    (href) => {
+      router.push(href);
+      closeAll();
+    },
+    [router, closeAll]
+  );
 
-  const submitSearch = (event) => {
-    event.preventDefault();
-    runSearch();
-  };
-
-  const selectSuggestion = () => {
-    dispatch(searchInputHandler(""));
-    closeAll();
-  };
-
-  const changeSearch = (event) => {
-    dispatch(searchInputHandler(event.target.value));
-  };
+  const openSearch = useCallback(() => {
+    dispatch(closeNav());
+    setCategoriesOpen(false);
+    setSpecialsOpen(false);
+    setSearchOpen(true);
+  }, [dispatch]);
 
   useEffect(() => {
     closeAll();
   }, [path, closeAll]);
+
+  useEffect(() => {
+    if (!navOpen) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previous;
+    };
+  }, [navOpen]);
 
   useEffect(() => {
     const onKeyDown = (event) => {
@@ -186,20 +169,10 @@ const Navbar = () => {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [closeAll]);
 
-  useEffect(() => {
-    if (!searchOpen) return;
-    const previous = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    searchInputRef.current?.focus();
-    return () => {
-      document.body.style.overflow = previous;
-    };
-  }, [searchOpen]);
-
   return (
     <>
-      <div className="fixed inset-x-0 top-0 z-40 p-3 sm:p-4">
-        <header className="mx-auto flex h-16 max-w-[1400px] items-center justify-between gap-5 border border-white/10 bg-[#04152d]/95 px-4 shadow-[0_24px_60px_-40px_rgba(0,0,0,0.95)] backdrop-blur-xl sm:h-[72px] sm:px-6">
+      <div className="pointer-events-none fixed inset-x-0 top-0 z-40 p-3 sm:p-4">
+        <header className="pointer-events-auto mx-auto flex h-16 max-w-[1400px] items-center justify-between gap-5 border border-white/10 bg-[#04152d]/95 px-4 shadow-[0_24px_60px_-40px_rgba(0,0,0,0.95)] backdrop-blur-xl sm:h-[72px] sm:px-6">
           <Link href="/" onClick={closeAll} className="flex items-center gap-3">
             <span className="relative flex h-9 w-9 items-center justify-center">
               <Image
@@ -268,7 +241,7 @@ const Navbar = () => {
           <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={() => setSearchOpen(true)}
+              onClick={openSearch}
               aria-label="Open search"
               className="flex h-10 items-center gap-3 border border-white/15 px-3 text-sm text-slate-300 transition-colors duration-200 hover:border-[#51E5FF]/60 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#51E5FF]"
             >
@@ -294,160 +267,118 @@ const Navbar = () => {
           </div>
         </header>
 
-        <div
-          aria-hidden={!navOpen}
-          className={`mx-auto mt-2 max-w-[1400px] border border-white/10 bg-[#04152d]/95 px-5 py-5 backdrop-blur-xl transition duration-300 ease-out lg:hidden ${
-            navOpen
-              ? "pointer-events-auto translate-y-0 opacity-100"
-              : "pointer-events-none -translate-y-2 opacity-0"
-          }`}
-        >
-          <button
-            type="button"
-            onClick={() => setSearchOpen(true)}
-            className="flex h-11 w-full items-center gap-3 border border-white/15 px-4 text-sm text-slate-300 transition-colors hover:border-[#51E5FF]/60 hover:text-white"
-          >
-            <AiOutlineSearch size={18} aria-hidden="true" />
-            Search movies
-          </button>
-
-          <div className="mt-4 space-y-1">
-            <Link
-              href="/favorite"
-              onClick={closeAll}
-              className="flex min-h-[44px] items-center justify-between border-b border-white/10 text-sm font-bold uppercase tracking-[0.14em] text-white transition-colors hover:text-[#51E5FF]"
-            >
-              <span className="flex items-center gap-2">
-                <MdOutlineFavorite size={17} aria-hidden="true" />
-                Favorites
-              </span>
-              <span className="text-[10px] text-[#51E5FF]/60 tabular-nums">03</span>
-            </Link>
-
-            {[
-              {
-                label: "Categories",
-                index: "01",
-                links: categoryLinks,
-                open: categoriesOpen,
-                toggle: () => {
-                  setCategoriesOpen((prev) => !prev);
-                  setSpecialsOpen(false);
-                },
-              },
-              {
-                label: "Specials",
-                index: "02",
-                links: specialLinks,
-                open: specialsOpen,
-                toggle: () => {
-                  setSpecialsOpen((prev) => !prev);
-                  setCategoriesOpen(false);
-                },
-              },
-            ].map((section) => (
-              <div key={section.label}>
-                <button
-                  type="button"
-                  onClick={section.toggle}
-                  aria-expanded={section.open}
-                  className="flex min-h-[44px] w-full items-center justify-between border-b border-white/10 text-sm font-bold uppercase tracking-[0.14em] text-white transition-colors hover:text-[#51E5FF]"
-                >
-                  <span className="flex items-center gap-2">
-                    <span className="text-[10px] text-[#51E5FF]/60 tabular-nums">
-                      {section.index}
-                    </span>
-                    {section.label}
-                  </span>
-                  {section.open ? (
-                    <IoMdArrowDropup size={20} aria-hidden="true" />
-                  ) : (
-                    <IoMdArrowDropdown size={20} aria-hidden="true" />
-                  )}
-                </button>
-                {section.open && (
-                  <div className="grid grid-cols-2 gap-1 py-2">
-                    {section.links.map((link) => (
-                      <Link
-                        key={link.id}
-                        href={link.href}
-                        onClick={closeAll}
-                        className="px-2 py-2 text-sm text-slate-200 transition-colors hover:bg-white/5 hover:text-[#51E5FF]"
-                      >
-                        {link.label}
-                      </Link>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
       </div>
 
-      {searchOpen && (
-        <div
-          className="fixed inset-0 z-50 flex items-start justify-center bg-[#04152d]/90 px-4 pt-[12vh] backdrop-blur-md"
-          onMouseDown={(event) => {
-            if (event.target === event.currentTarget) setSearchOpen(false);
-          }}
-        >
-          <div className="w-full max-w-2xl border border-white/15 bg-[#0a1b31] shadow-2xl">
-            <form
-              onSubmit={submitSearch}
-              className="flex items-center gap-3 border-b border-white/10 px-5"
+      {navOpen && (
+        <>
+          <div
+            className="fixed inset-0 z-30 bg-[#04152d]/60 backdrop-blur-[2px] lg:hidden"
+            onClick={closeAll}
+            aria-hidden="true"
+          />
+          <div
+            data-outside-click-ignore=""
+            className="fixed inset-x-0 top-[84px] z-40 px-3 sm:top-[96px] sm:px-4 lg:hidden"
+          >
+            <div
+              role="dialog"
+              aria-label="Mobile navigation"
+              className="nav-enter mx-auto max-h-[calc(100vh-100px)] max-w-[1400px] overflow-y-auto overscroll-contain border border-white/10 bg-[#04152d] px-5 py-5 shadow-2xl"
             >
-              <AiOutlineSearch size={22} className="shrink-0 text-[#51E5FF]" aria-hidden="true" />
-              <input
-                ref={searchInputRef}
-                type="text"
-                value={searchInput}
-                onChange={changeSearch}
-                placeholder="Search movies…"
-                aria-label="Search movies"
-                className="h-16 min-w-0 flex-1 bg-transparent text-lg text-white placeholder:text-slate-500 focus:outline-none"
-              />
-              <kbd className="hidden shrink-0 border border-white/15 px-1.5 py-0.5 text-[10px] font-semibold text-slate-400 sm:inline">
-                ESC
-              </kbd>
-            </form>
-
-            <div className="max-h-[50vh] overflow-y-auto">
-              {searchInput.trim() ? (
-                suggestions.length ? (
-                  suggestions.map((movie) => (
-                    <SearchTabComponent
-                      key={movie.id}
-                      {...movie}
-                      onSelect={selectSuggestion}
-                    />
-                  ))
-                ) : (
-                  <p className="px-5 py-10 text-center text-sm text-slate-400">
-                    No results for “{searchInput}”
-                  </p>
-                )
-              ) : (
-                <p className="px-5 py-10 text-center text-sm text-slate-400">
-                  Start typing to find a movie…
-                </p>
-              )}
-            </div>
-
-            <div className="flex items-center justify-between border-t border-white/10 px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400">
-              <span>Powered by TMDB</span>
               <button
                 type="button"
-                onClick={runSearch}
-                className="inline-flex items-center gap-2 text-[#51E5FF] transition-colors hover:text-white"
+                onClick={openSearch}
+                className="flex h-11 w-full items-center gap-3 border border-white/15 px-4 text-sm text-slate-300 transition-colors hover:border-[#51E5FF]/60 hover:text-white"
               >
-                See all results
-                <AiOutlineArrowRight size={14} aria-hidden="true" />
+                <AiOutlineSearch size={18} aria-hidden="true" />
+                Search movies
               </button>
+
+              <div className="mt-4 space-y-1">
+                <Link
+                  href="/favorite"
+                  onClick={(event) => {
+                    event.preventDefault();
+                    navigateAndClose("/favorite");
+                  }}
+                  className="flex min-h-[44px] items-center justify-between border-b border-white/10 text-sm font-bold uppercase tracking-[0.14em] text-white transition-colors hover:text-[#51E5FF]"
+                >
+                  <span className="flex items-center gap-2">
+                    <MdOutlineFavorite size={17} aria-hidden="true" />
+                    Favorites
+                  </span>
+                  <span className="text-[10px] text-[#51E5FF]/60 tabular-nums">
+                    03
+                  </span>
+                </Link>
+
+                {[
+                  {
+                    label: "Categories",
+                    index: "01",
+                    links: categoryLinks,
+                    open: categoriesOpen,
+                    toggle: () => {
+                      setCategoriesOpen((prev) => !prev);
+                      setSpecialsOpen(false);
+                    },
+                  },
+                  {
+                    label: "Specials",
+                    index: "02",
+                    links: specialLinks,
+                    open: specialsOpen,
+                    toggle: () => {
+                      setSpecialsOpen((prev) => !prev);
+                      setCategoriesOpen(false);
+                    },
+                  },
+                ].map((section) => (
+                  <div key={section.label}>
+                    <button
+                      type="button"
+                      onClick={section.toggle}
+                      aria-expanded={section.open}
+                      className="flex min-h-[44px] w-full items-center justify-between border-b border-white/10 text-sm font-bold uppercase tracking-[0.14em] text-white transition-colors hover:text-[#51E5FF]"
+                    >
+                      <span className="flex items-center gap-2">
+                        <span className="text-[10px] text-[#51E5FF]/60 tabular-nums">
+                          {section.index}
+                        </span>
+                        {section.label}
+                      </span>
+                      {section.open ? (
+                        <IoMdArrowDropup size={20} aria-hidden="true" />
+                      ) : (
+                        <IoMdArrowDropdown size={20} aria-hidden="true" />
+                      )}
+                    </button>
+                    {section.open && (
+                      <div className="grid grid-cols-2 gap-1 py-2">
+                        {section.links.map((link) => (
+                          <Link
+                            key={link.id}
+                            href={link.href}
+                            onClick={(event) => {
+                              event.preventDefault();
+                              navigateAndClose(link.href);
+                            }}
+                            className="flex min-h-[44px] items-center px-3 text-sm text-slate-200 transition-colors hover:bg-white/5 hover:text-[#51E5FF]"
+                          >
+                            {link.label}
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
+        </>
       )}
+
+      {searchOpen && <SearchOverlay onClose={closeSearch} />}
     </>
   );
 };
