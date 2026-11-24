@@ -1,7 +1,7 @@
-import { useState } from "react";
+import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
-import { useDispatch, useSelector } from "react-redux";
+import { useState } from "react";
 
 import { AiFillStar, AiOutlineArrowRight } from "react-icons/ai";
 
@@ -9,20 +9,13 @@ import {
   useGetMoviesQuery,
   useGetTrendingMoviesQuery,
 } from "@/store/api/restApis";
-import { tabsHandler } from "@/store/slice/tabsSlice";
 import { imagePath } from "@/utilities";
 
-import GenreExplorer from "../GenreExplorer";
+import { SkeletonGrid } from "../DiscoverShell";
 import HeroBanner from "../HeroBanner";
 import LandingMovieCard from "../LandingMovieCard";
-import Pagination from "../Pagination";
 
-export const tabs = [
-  { title: "Now Playing", tab: "now_playing" },
-  { title: "Popular", tab: "popular" },
-  { title: "Top Rated", tab: "top_rated" },
-  { title: "Upcoming", tab: "upcoming" },
-];
+const GenreExplorer = dynamic(() => import("../GenreExplorer"));
 
 const SectionHeading = ({ eyebrow, title, description, action }) => (
   <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
@@ -84,30 +77,17 @@ const TrendingCard = ({ movie, rank }) => (
 );
 
 const Movies = () => {
-  const dispatch = useDispatch();
-  const pageId = Number(useSelector((state) => state.tabsSlice.tabs)) || 1;
+  const [trending, setTrending] = useState("week");
 
-  const [tab, setTab] = useState("now_playing");
-  const [trending, setTrending] = useState("day");
-
-  const {
-    data: moviesData,
-    isLoading: moviesLoading,
-  } = useGetMoviesQuery({ tab, pageId });
+  const { data: popularData, isLoading: popularLoading } = useGetMoviesQuery({
+    tab: "popular",
+    pageId: 1,
+  });
   const { data: trendingData, isLoading: trendingLoading } =
     useGetTrendingMoviesQuery({ trending });
 
   const featuredTrending = trendingData?.results?.slice(0, 3) ?? [];
-  const activeTab = tabs.find((item) => item.tab === tab);
-
-  const changeTab = (value) => {
-    setTab(value);
-    dispatch(tabsHandler(1));
-  };
-
-  const changePage = (page) => {
-    dispatch(tabsHandler(page));
-  };
+  const popularPicks = popularData?.results?.slice(0, 6) ?? [];
 
   const trendingToggle = (
     <div className="flex border border-white/15">
@@ -119,7 +99,7 @@ const Movies = () => {
           key={option.value}
           type="button"
           onClick={() => setTrending(option.value)}
-          className={`px-4 py-2.5 text-[11px] font-bold uppercase tracking-[0.16em] transition-colors ${
+          className={`flex min-h-[44px] items-center px-4 py-2.5 text-[11px] font-bold uppercase tracking-[0.16em] transition-colors ${
             trending === option.value
               ? "bg-[#51E5FF] text-[#04152d]"
               : "text-slate-300 hover:text-white"
@@ -139,7 +119,7 @@ const Movies = () => {
         <SectionHeading
           eyebrow="01 / What's hot"
           title="Trending right now"
-          description="A quick look at the films everyone is watching today — switch to the weekly view to see what's holding strong."
+          description="A quick look at the films holding strong this week — switch to today for the newest pulse."
           action={trendingToggle}
         />
 
@@ -148,13 +128,15 @@ const Movies = () => {
             ? featuredTrending.map((movie, index) => (
                 <TrendingCard key={movie.id} movie={movie} rank={index + 1} />
               ))
-            : Array.from({ length: 3 }).map((_, index) => (
+            : trendingLoading
+            ? Array.from({ length: 3 }).map((_, index) => (
                 <div
                   key={`trending-skeleton-${index}`}
                   className="h-[156px] animate-pulse bg-[#0a1b31]"
                   aria-hidden="true"
                 />
-              ))}
+              ))
+            : null}
         </div>
       </section>
 
@@ -162,95 +144,48 @@ const Movies = () => {
 
       <section
         id="movies"
-        className="mx-auto max-w-[1400px] scroll-mt-28 px-4 py-16 sm:px-8 lg:px-12 lg:py-20"
+        className="mx-auto max-w-[1400px] scroll-mt-28 px-4 py-14 sm:px-8 lg:px-12 lg:py-16"
       >
         <SectionHeading
           eyebrow="03 / The collection"
           title="Explore movies"
-          description="From new releases to all-time favourites. Pick a list, find your next watch."
+          description="A small preview of the full movie index. Use the complete library for genre, year, rating and language filters."
+          action={
+            <Link
+              href="/movies"
+              className="inline-flex min-h-[44px] w-fit items-center gap-2 border-b border-white/30 pb-1 text-xs font-bold uppercase tracking-[0.16em] text-white transition-colors hover:border-[#51E5FF] hover:text-[#51E5FF]"
+            >
+              Open full library
+              <AiOutlineArrowRight size={15} aria-hidden="true" />
+            </Link>
+          }
         />
 
-        <div className="mt-10 grid gap-8 lg:grid-cols-[220px_1fr]">
-          <aside>
-            <p className="text-[10px] font-bold uppercase tracking-[0.28em] text-[#51E5FF]">
-              Filter
-            </p>
-            <div className="mt-4 flex gap-2 overflow-x-auto lg:flex-col">
-              {tabs.map((item, index) => (
-                <button
-                  key={item.tab}
-                  type="button"
-                  onClick={() => changeTab(item.tab)}
-                  className={`flex shrink-0 items-center justify-between gap-3 border px-4 py-3 text-left text-sm transition-colors duration-200 lg:w-full ${
-                    tab === item.tab
-                      ? "border-[#51E5FF] bg-[#51E5FF] text-[#04152d]"
-                      : "border-white/10 text-slate-300 hover:border-white/30 hover:text-white"
-                  }`}
-                >
-                  <span className="flex items-center gap-3">
-                    <span className="text-[10px] opacity-60 tabular-nums">
-                      0{index + 1}
-                    </span>
-                    {item.title}
-                  </span>
-                  <AiOutlineArrowRight
-                    size={14}
-                    aria-hidden="true"
-                    className={tab === item.tab ? "opacity-100" : "opacity-0"}
-                  />
-                </button>
-              ))}
-            </div>
-            <div className="mt-8 hidden border-t border-white/10 pt-5 lg:block">
-              <p className="text-[10px] uppercase tracking-[0.2em] text-slate-500">
-                Updated daily
-              </p>
-              <p className="mt-2 text-sm text-slate-300">
-                Data powered by TMDB
-              </p>
-            </div>
-          </aside>
-
-          <div>
-            <div className="flex items-center justify-between border-b border-white/10 pb-4">
-              <p className="text-sm font-semibold text-white">
-                {activeTab?.title}
-                <span className="ml-2 text-slate-500 tabular-nums">
-                  / page {pageId}
-                </span>
-              </p>
-              <p className="text-xs text-slate-400 tabular-nums">
-                {moviesData?.total_results?.toLocaleString() ?? "—"} titles
-              </p>
-            </div>
-
-            {moviesLoading ? (
-              <div className="mt-6 grid grid-cols-3 gap-2 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-                {Array.from({ length: 8 }).map((_, index) => (
-                  <div
-                    key={`movie-skeleton-${index}`}
-                    className="animate-pulse"
-                    aria-hidden="true"
-                  >
-                    <div className="aspect-[2/3] bg-[#0a1b31]" />
-                    <div className="mt-3 h-4 w-3/4 bg-[#0a1b31]" />
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="mt-6 grid grid-cols-3 gap-2 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-                {moviesData?.results?.map((movie) => (
-                  <LandingMovieCard key={movie.id} {...movie} />
-                ))}
-              </div>
-            )}
-
-            <Pagination
-              pages={moviesData?.total_pages}
-              current={pageId}
-              onChange={changePage}
-            />
+        {popularLoading ? (
+          <SkeletonGrid
+            count={6}
+            className="mt-9 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6"
+          />
+        ) : (
+          <div className="mt-9 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
+            {popularPicks.map((movie) => (
+              <LandingMovieCard key={movie.id} compact {...movie} />
+            ))}
           </div>
+        )}
+
+        <div className="mt-8 flex flex-col gap-4 border-t border-white/10 pt-5 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-xs text-slate-400 tabular-nums">
+            {popularData?.total_results?.toLocaleString() ?? "—"} titles in the
+            full index
+          </p>
+          <Link
+            href="/movies"
+            className="inline-flex min-h-[44px] items-center gap-2 bg-[#51E5FF] px-5 text-xs font-bold uppercase tracking-[0.16em] text-[#04152d] transition-colors hover:bg-white"
+          >
+            Browse all movies
+            <AiOutlineArrowRight size={15} aria-hidden="true" />
+          </Link>
         </div>
       </section>
     </div>

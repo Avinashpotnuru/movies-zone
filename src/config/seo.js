@@ -1,3 +1,4 @@
+import { getCollection } from "@/config/collections";
 import { tmdbImageUrl } from "@/config/site";
 
 const baseUrl = process.env.NEXT_PUBLIC_BACKEND_BASEURL;
@@ -48,12 +49,15 @@ export const fetchGenreCollectionSeoMeta = (id) =>
     )}`
   ).then(firstFeaturedImage);
 
-export const fetchSpecialCollectionSeoMeta = (language) =>
-  fetchJson(
+export const fetchSpecialCollectionSeoMeta = (page) => {
+  const language = getCollection(page)?.code || page;
+
+  return fetchJson(
     `discover/movie?include_adult=false&include_video=false&language=en-US&page=1&sort_by=popularity.desc&with_origin_country=IN&with_original_language=${encodeURIComponent(
       language
     )}`
   ).then(firstFeaturedImage);
+};
 
 export const fetchSearchSeoMeta = (term, page = 1) =>
   fetchJson(

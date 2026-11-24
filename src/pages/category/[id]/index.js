@@ -1,8 +1,14 @@
-import Genres from "@/components/Genres";
+import dynamic from "next/dynamic";
 import React from "react";
 
+import LoadingRing from "@/components/LoadingRing";
 import Seo from "@/components/Seo";
 import { absoluteUrl, truncate } from "@/config/site";
+
+const Genres = dynamic(() => import("@/components/Genres"), {
+  ssr: false,
+  loading: () => <LoadingRing label="genre-loading" />,
+});
 
 const CategoryPage = ({ id, meta }) => {
   const genreName = meta?.name || "Genre";

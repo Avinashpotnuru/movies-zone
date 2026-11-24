@@ -3,7 +3,6 @@ import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
   tabs: "1",
-  searchResult: "",
   searchInput: "",
   navToggle: false,
 };
@@ -15,23 +14,13 @@ const tabsSlice = createSlice({
     tabsHandler: (state, action) => {
       state.tabs = action.payload;
     },
-    searchHandler: (state, action) => {
-      // console.log("action.payload", action.payload);
-      state.searchInput = action.payload;
-    },
     searchInputHandler: (state, action) => {
-      // console.log("action.payload", action.payload);
       state.searchInput = action.payload;
     },
-
-    clearSearchHandler: (state, action) => {
-      state.searchInput = "";
-    },
-
-    openNav: (state, action) => {
+    openNav: (state) => {
       state.navToggle = true;
     },
-    closeNav: (state, action) => {
+    closeNav: (state) => {
       state.navToggle = false;
     },
   },
@@ -39,8 +28,6 @@ const tabsSlice = createSlice({
 
 export const {
   tabsHandler,
-  searchHandler,
-  clearSearchHandler,
   searchInputHandler,
   closeNav,
   openNav,

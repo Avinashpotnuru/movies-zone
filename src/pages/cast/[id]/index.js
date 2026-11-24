@@ -1,8 +1,15 @@
 //import components
 
-import CastDetails from "@/components/CastDetails";
+import dynamic from "next/dynamic";
+
+import LoadingRing from "@/components/LoadingRing";
 import Seo from "@/components/Seo";
 import { absoluteUrl, tmdbImageUrl, truncate } from "@/config/site";
+
+const CastDetails = dynamic(() => import("@/components/CastDetails"), {
+  ssr: false,
+  loading: () => <LoadingRing label="profile-loading" />,
+});
 
 const CastPage = ({ id, meta }) => {
   const name = meta?.name || "Cast profile";

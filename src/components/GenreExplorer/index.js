@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { AiOutlineArrowRight } from "react-icons/ai";
 
+import { getGenreNote } from "@/config/genres";
 import { useGetGenresMoviesQuery, useGetGenresQuery } from "@/store/api/restApis";
 import { imagePath } from "@/utilities";
 
@@ -83,8 +84,7 @@ const GenreTile = ({ genre, index, feature, coral, cyan }) => {
         </h3>
         {feature && (
           <p className="mt-3 max-w-[210px] text-xs leading-relaxed text-white/70">
-            Big-scale stories, relentless pace and the films that keep you on
-            the edge of your seat.
+            {getGenreNote(genre)}
           </p>
         )}
       </div>
@@ -112,8 +112,8 @@ const GenreExplorer = () => {
             </p>
           </div>
           <Link
-            href="#movies"
-            className="inline-flex w-fit items-center gap-2 border-b border-white/30 pb-1 text-xs font-bold uppercase tracking-[0.16em] text-white transition-colors hover:border-[#51E5FF] hover:text-[#51E5FF]"
+            href="/movies"
+            className="inline-flex min-h-[44px] w-fit items-center gap-2 border-b border-white/30 pb-1 text-xs font-bold uppercase tracking-[0.16em] text-white transition-colors hover:border-[#51E5FF] hover:text-[#51E5FF]"
           >
             See all movies
             <AiOutlineArrowRight size={15} aria-hidden="true" />

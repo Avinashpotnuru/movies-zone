@@ -357,7 +357,7 @@ const MoviesSearch = ({
       <header className="border-b border-white/10">
         <div className="mx-auto max-w-[1400px] px-5 py-10 sm:px-8 lg:px-12 lg:py-14">
           <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-end">
-            <div>
+            <div className="min-w-0">
               <div className="flex items-center gap-3">
                 <span className="h-px w-8 bg-[#F4442E]" />
                 <p className="text-[10px] font-bold uppercase tracking-[0.28em] text-[#51E5FF]">

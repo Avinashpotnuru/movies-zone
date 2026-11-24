@@ -34,11 +34,46 @@ const restApi = createApi({
       query: (data) => `movie/${data.tab}?page=${data.pageId}`,
       providesTags: ["Movies"],
     }),
-    getMovieById: builder.query({
-      query: (data) => `movie/${data.id}`,
+
+    discoverMovies: builder.query({
+      query: (filters = {}) => {
+        const params = new URLSearchParams({
+          include_adult: "false",
+          include_video: "false",
+          language: "en-US",
+          page: String(filters.page || 1),
+          sort_by: filters.sortBy || "popularity.desc",
+        });
+
+        if (filters.withGenres?.length) {
+          params.set("with_genres", filters.withGenres.join(","));
+        }
+        if (filters.releaseFrom) {
+          params.set("primary_release_date.gte", `${filters.releaseFrom}-01-01`);
+        }
+        if (filters.releaseTo) {
+          params.set("primary_release_date.lte", `${filters.releaseTo}-12-31`);
+        }
+        if (filters.voteAverageGte) {
+          params.set("vote_average.gte", String(filters.voteAverageGte));
+        }
+        if (filters.voteAverageLte) {
+          params.set("vote_average.lte", String(filters.voteAverageLte));
+        }
+        if (filters.voteCountGte) {
+          params.set("vote_count.gte", String(filters.voteCountGte));
+        }
+        if (filters.originalLanguage) {
+          params.set("with_original_language", filters.originalLanguage);
+        }
+        if (filters.originCountry) {
+          params.set("with_origin_country", filters.originCountry);
+        }
+
+        return `discover/movie?${params.toString()}`;
+      },
       providesTags: ["Movies"],
     }),
-
     getMovieFullDetailsById: builder.query({
       query: (data) =>
         `movie/${data.id}?append_to_response=credits,similar,videos,watch/providers `,
@@ -71,15 +106,6 @@ const restApi = createApi({
         `discover/movie?include_adult=false&include_video=false&language=en-US&page=${data.pageId}&sort_by=popularity.desc&with_genres=${data.id}`,
       providesTags: ["Movies"],
     }),
-    getSpecialMovies: builder.query({
-      query: (data) =>
-        `discover/movie?include_adult=false&include_video=false&language=en-US&page=${data.pageId}&sort_by=popularity.desc&with_origin_country=IN&with_original_language=${data.code}`,
-      providesTags: ["Movies"],
-    }),
-    getUpComingMovies: builder.query({
-      query: () => `movie/upcoming`,
-      providesTags: ["Movies"],
-    }),
     getTrendingMovies: builder.query({
       query: (data) => `trending/movie/${data?.trending}`,
       providesTags: ["Movies"],
@@ -96,14 +122,12 @@ const restApi = createApi({
 export const {
   useAddFavoritesMutation,
   useGetMoviesQuery,
-  useGetMovieByIdQuery,
+  useDiscoverMoviesQuery,
   useGetSearchMoviesQuery,
   useGetMovieImagesQuery,
   useGetFavoriteMoviesQuery,
   useGetGenresQuery,
   useGetGenresMoviesQuery,
-  useGetSpecialMoviesQuery,
-  useGetUpComingMoviesQuery,
   useGetMovieFullDetailsByIdQuery,
   useGetTrendingMoviesQuery,
   useGetCastFullDetailsQuery,

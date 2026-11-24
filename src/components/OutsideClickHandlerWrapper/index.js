@@ -5,6 +5,9 @@ const OutsideClickHandlerWrapper = ({ onOutsideClick, children }) => {
 
   useEffect(() => {
     const handleClickOutside = (event) => {
+      // Mobile nav lives outside these desktop dropdown wrappers; clicks inside
+      // it must not collapse the desktop accordions and unmount mobile links.
+      if (event.target.closest?.("[data-outside-click-ignore]")) return;
       if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
         onOutsideClick();
       }
