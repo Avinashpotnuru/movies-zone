@@ -58,7 +58,7 @@ A premium movie discovery app built with Next.js (Pages Router). Browse trending
 
 - **Typography:** `Inter` for body copy, `Space Grotesk` for headings, both loaded with `next/font/google` in `src/pages/_app.js`.
 - **Visual language:** sharp edges, hairline borders, oversized numerals, restrained motion, asymmetric editorial layouts, and sparing accent color.
-- **Imagery:** TMDB image CDN through `next/image`; `sharp` is installed for production optimization. Posters and profile cards use reliable sizes in both dev and production.
+- **Imagery:** TMDB image CDN through `next/image` with optimization disabled, so production deployments load poster files directly from TMDB instead of relying on Netlify's `/_ipx` sharp runtime. Posters and profile cards use reliable sizes in both dev and production.
 
 ---
 
@@ -142,7 +142,7 @@ Filters are parsed from and written back to the query string, so any view can be
 - **Favorites.** `FavoritesProvider` centralizes saved-favorite state so cards, detail pages, and `/favorite` stay in sync against the shared demo TMDB account.
 - **Server-only SEO.** Dynamic routes import `src/config/seo.js` inside `getStaticProps`/`getServerSideProps`, keeping API helpers out of the browser bundle.
 - **Dynamic sections.** Heavy routes such as movies/category/specials load their client shells with `next/dynamic` and a `LoadingRing` fallback.
-- **Images.** `next/image` with `sharp`, explicit `sizes`, TMDB CDN preconnect/dns-prefetch, and object-top crops for profile/gallery faces.
+- **Images.** `next/image` with `unoptimized: true`, explicit `sizes`, TMDB CDN preconnect/dns-prefetch, and object-top crops for profile/gallery faces.
 
 ---
 
@@ -179,7 +179,7 @@ The About page combines `WebPage` and `FAQPage` schemas; movie and person routes
 - React 18.2
 - Redux Toolkit + RTK Query (scoped via `ApiProvider`)
 - Tailwind CSS 3.3
-- `next/image` + `sharp` 0.35
+- `next/image` with direct TMDB CDN delivery
 - `next/font/google` for Inter and Space Grotesk
 - `react-icons`
 - ESLint via `next lint`
@@ -225,7 +225,7 @@ NEXT_PUBLIC_TWITTER_HANDLE=
 ```
 
 - The first two point to the TMDB-backed API used by `src/store/api/restApis.js`.
-- `NEXT_PUBLIC_SITE_URL` builds canonical and social image URLs; it falls back to `http://localhost:3000`.
+- `NEXT_PUBLIC_SITE_URL` builds canonical and social image URLs; it falls back to `http://localhost:3000`, so set it to the deployed URL on Netlify.
 - `NEXT_PUBLIC_TWITTER_HANDLE` is optional.
 - `.env.local` is gitignored. Do not overwrite the existing environment files when working in this repository.
 
