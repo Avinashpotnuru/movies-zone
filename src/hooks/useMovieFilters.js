@@ -1,4 +1,6 @@
-import { useRouter } from "next/router";
+"use client";
+
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
@@ -17,15 +19,17 @@ export const useMovieFilters = ({
   pageParam = "page",
 } = {}) => {
   const router = useRouter();
-  const targetPathname = pathname || router.pathname;
+  const searchParams = useSearchParams();
+  const currentPathname = usePathname();
+  const targetPathname = pathname || currentPathname;
 
   const queryFilters = useMemo(
     () =>
-      parseFilters(router.query || {}, defaults, {
+      parseFilters(Object.fromEntries(searchParams.entries()), defaults, {
         lockOriginalLanguage,
         pageParam,
       }),
-    [router.query, defaults, lockOriginalLanguage, pageParam]
+    [searchParams, defaults, lockOriginalLanguage, pageParam]
   );
 
   const [filters, setFilters] = useState(queryFilters);
@@ -56,8 +60,15 @@ export const useMovieFilters = ({
       filtersRef.current = normalized;
       setFilters(normalized);
       lastPushedQueryRef.current = JSON.stringify(query);
-      router.push({ pathname: targetPathname, query }, undefined, {
-        shallow: true,
+
+      const params = new URLSearchParams();
+      Object.entries(query).forEach(([key, value]) => {
+        if (value === undefined || value === null || value === "") return;
+        params.set(key, String(value));
+      });
+      const search = params.toString();
+
+      router.push(search ? `${targetPathname}?${search}` : targetPathname, {
         scroll: false,
       });
     },
@@ -98,6 +109,6 @@ export const useMovieFilters = ({
     applyFilters,
     resetFilters,
     goToPage,
-    isReady: router.isReady,
+    isReady: true,
   };
 };

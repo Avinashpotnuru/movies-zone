@@ -44,6 +44,37 @@ export const isoDate = (date) => date.toISOString().slice(0, 10);
 export const daysFromToday = (days) =>
   isoDate(new Date(Date.now() + days * 24 * 60 * 60 * 1000));
 
+export const MOVIE_TABS = [
+  {
+    id: "popular",
+    title: "Popular",
+    preset: { sortBy: "popularity.desc" },
+  },
+  {
+    id: "top_rated",
+    title: "Top Rated",
+    preset: { sortBy: "vote_average.desc", voteCountGte: 1000 },
+  },
+  {
+    id: "now_playing",
+    title: "Now Playing",
+    preset: {
+      sortBy: "primary_release_date.desc",
+      releaseFrom: daysFromToday(-60).slice(0, 4),
+      releaseTo: CURRENT_YEAR.toString(),
+    },
+  },
+  {
+    id: "upcoming",
+    title: "Upcoming",
+    preset: {
+      sortBy: "primary_release_date.asc",
+      releaseFrom: CURRENT_YEAR.toString(),
+      releaseTo: (CURRENT_YEAR + 1).toString(),
+    },
+  },
+];
+
 const queryValue = (value) => (Array.isArray(value) ? value[0] : value);
 
 export const parseFilters = (query, defaults = DEFAULT_FILTERS, options = {}) => {

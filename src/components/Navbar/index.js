@@ -1,7 +1,8 @@
+"use client";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/router";
+import { usePathname, useRouter } from "next/navigation";
 
 import { useCallback, useEffect, useState } from "react";
 
@@ -93,7 +94,7 @@ const NavDropdown = ({ index, label, links, isOpen, onToggle, onClose, active })
 
 const Navbar = () => {
   const router = useRouter();
-  const path = router.pathname;
+  const path = usePathname();
 
   const [navOpen, setNavOpen] = useState(false);
   const [categoriesOpen, setCategoriesOpen] = useState(false);

@@ -1,6 +1,6 @@
 # Movies-Zone
 
-A premium movie discovery app built with Next.js (Pages Router). Browse trending titles, refine the catalog with TMDB-style URL filters, explore regional collections, open detailed movie and cast profiles, search the archive, save favorites, and read the site FAQ — all from one responsive, SEO-friendly app.
+A premium movie discovery app built with Next.js (App Router). Browse trending titles, refine the catalog with TMDB-style URL filters, explore regional collections, open detailed movie and cast profiles, search the archive, save favorites, and read the site FAQ — all from one responsive, SEO-friendly app.
 
 > **Yarn only.** Use `yarn install`, `yarn dev`, `yarn lint`, `yarn build`, and `yarn start`. `yarn.lock` is authoritative; do not use npm or reintroduce `package-lock.json`.
 
@@ -43,7 +43,7 @@ A premium movie discovery app built with Next.js (Pages Router). Browse trending
 - **Videos** — trailers and clips play inline in a viewport-sized `youtube-nocookie.com` modal, never fullscreen. Escape, outside click, and the close button all dismiss it.
 - **Footer** — compact two-column mobile layout, centered social icons, collection links, and the credit `Avinash Potnuru` linking to <https://avinashpotnuruportfolio.netlify.app/> in a new tab.
 - **SEO** — per-route title, description, canonical URL, Open Graph/Twitter cards, and JSON-LD (`WebPage`, `FAQPage`, `CollectionPage`, movie and person schemas).
-- **Performance** — Redux is no longer mounted in `_app`; RTK Query is scoped through `ApiProvider`, UI state is local React state, and server-only SEO helpers are dynamically imported so they stay out of the client bundle. Current build reports ~107 kB shared First Load JS, ~132 kB on `/`, and ~101 kB on `/about`.
+- **Performance** — Redux is not mounted in the root layout; RTK Query is scoped through `ApiProvider`, UI state is local React state, and server-only SEO helpers stay out of the client bundle. Current build reports ~78.8 kB shared First Load JS, ~131 kB on `/`, and ~89.3 kB on `/about`.
 
 ---
 
@@ -56,7 +56,7 @@ A premium movie discovery app built with Next.js (Pages Router). Browse trending
 | Cyan | `#51E5FF` | Primary accent, active states, links |
 | Coral-red | `#F4442E` | Alerts, badges, focal accents |
 
-- **Typography:** `Inter` for body copy, `Space Grotesk` for headings, both loaded with `next/font/google` in `src/pages/_app.js`.
+- **Typography:** `Inter` for body copy, `Space Grotesk` for headings, both loaded with `next/font/google` in `src/app/layout.js`.
 - **Visual language:** sharp edges, hairline borders, oversized numerals, restrained motion, asymmetric editorial layouts, and sparing accent color.
 - **Imagery:** TMDB image CDN through `next/image` with optimization disabled, so production deployments load poster files directly from TMDB instead of relying on Netlify's `/_ipx` sharp runtime. Posters and profile cards use reliable sizes in both dev and production.
 
@@ -137,25 +137,25 @@ Filters are parsed from and written back to the query string, so any view can be
 
 ## Rendering & data flow
 
-- **Next.js 13.4 Pages Router.** Detail, cast, image, category, and special routes use `getStaticProps` + `getStaticPaths` with ISR; search stays on `getServerSideProps` because it depends on the request URL.
-- **Scoped API layer.** `src/components/ApiProvider` wraps only pages that need RTK Query. Redux is not mounted globally in `_app`; ordinary UI state uses `useState`.
+- **Next.js 13.4 App Router.** Routes live in `src/app`; detail, cast, image, category, and special routes use `generateStaticParams` with ISR, while search reads `params`/`searchParams` per request.
+- **Scoped API layer.** `src/components/ApiProvider` wraps only pages that need RTK Query. Redux is not mounted globally in the root layout; ordinary UI state uses `useState`.
 - **Favorites.** `FavoritesProvider` centralizes saved-favorite state so cards, detail pages, and `/favorite` stay in sync against the shared demo TMDB account.
-- **Server-only SEO.** Dynamic routes import `src/config/seo.js` inside `getStaticProps`/`getServerSideProps`, keeping API helpers out of the browser bundle.
-- **Dynamic sections.** Heavy routes such as movies/category/specials load their client shells with `next/dynamic` and a `LoadingRing` fallback.
+- **Server-only SEO.** Dynamic routes import `src/config/seo.js` in server page components and `generateMetadata`, keeping API helpers out of the browser bundle; JSON-LD is rendered with `src/components/JsonLd`.
+- **Strict component boundaries.** Route shells, page headers, and detail heroes render on the server; only URL/filter/data-driven sections and interactive controls are client islands wrapped in `Suspense` with visible fallbacks.
 - **Images.** `next/image` with `unoptimized: true`, explicit `sizes`, TMDB CDN preconnect/dns-prefetch, and object-top crops for profile/gallery faces.
 
 ---
 
 ## SEO
 
-Every page renders one `src/components/Seo` component. It emits:
+Every route exports App Router `metadata` or `generateMetadata`, built with `src/config/metadata.js`. It emits:
 
 - `<title>` suffixed with `— Movies-Zone`
 - meta description, robots, and optional keywords
 - canonical URL from `absoluteUrl(path)` and `NEXT_PUBLIC_SITE_URL`
 - Open Graph type, site name, title, description, URL, image, and image alt
 - Twitter `summary_large_image` card with optional site handle
-- JSON-LD via `serializeJsonLd`, which escapes `<`, `>`, and `&`
+- JSON-LD via `src/components/JsonLd` and `serializeJsonLd`, which escapes `<`, `>`, and `&`
 
 The About page combines `WebPage` and `FAQPage` schemas; movie and person routes emit their own structured data.
 
@@ -175,7 +175,7 @@ The About page combines `WebPage` and `FAQPage` schemas; movie and person routes
 
 ## Tech stack
 
-- Next.js 13.4.19 (Pages Router)
+- Next.js 13.4.19 (App Router)
 - React 18.2
 - Redux Toolkit + RTK Query (scoped via `ApiProvider`)
 - Tailwind CSS 3.3
@@ -259,17 +259,31 @@ src/
 │   ├── Navbar/             # Mega-menu, search trigger, mobile panel
 │   ├── Pagination/         # Shared pagination
 │   ├── SearchOverlay/      # ⌘K command search dialog
-│   ├── Seo/                # Per-page head tags and JSON-LD
+│   ├── JsonLd/             # JSON-LD script renderer
+│   ├── Lazy/               # Client-only dynamic route shells
 │   └── ...
+├── app/                    # App Router routes
+│   ├── layout.js           # Root layout, fonts, global metadata
+│   ├── page.js             # Landing page
+│   ├── movies/             # Library and movie detail routes
+│   ├── search-movies/      # Search results route
+│   ├── category/           # Genre collection route
+│   ├── special/            # Regional collection route
+│   ├── cast/               # Cast profile route
+│   ├── images/             # Movie gallery route
+│   ├── about/              # About and FAQ route
+│   ├── favorite/           # Favorites route
+│   └── not-found.js        # Custom 404 route
 ├── config/
 │   ├── about.js            # About copy and FAQs
 │   ├── collections.js      # Regional specials config
+│   ├── metadata.js         # App Router metadata builder
 │   ├── seo.js              # Server-only metadata helpers
 │   └── site.js             # Site constants and URL/JSON-LD helpers
 ├── hooks/
 │   ├── useDebounce.js
-│   └── useFavoriteToggle.js  # FavoritesProvider
-├── pages/                  # Routes listed above
+│   ├── useFavoriteToggle.js  # FavoritesProvider
+│   └── useMovieFilters.js  # URL-synced filter state
 ├── store/api/restApis.js   # RTK Query endpoints and param mapping
 ├── styles/globals.css
 └── utilities.js

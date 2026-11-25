@@ -11,7 +11,7 @@ import {
 
 import { backdropPath, imagePath } from "@/utilities";
 
-const Stat = ({ label, value, accent, inline }) => (
+export const Stat = ({ label, value, accent, inline }) => (
   <div
     className={inline ? "" : "border-l border-white/10 px-4 first:border-l-0 first:pl-0"}
   >
@@ -28,7 +28,7 @@ const Stat = ({ label, value, accent, inline }) => (
   </div>
 );
 
-const FeaturedMovie = ({ movie, label }) => {
+export const FeaturedMovie = ({ movie, label }) => {
   if (!movie) return null;
 
   return (
@@ -87,8 +87,10 @@ export const DiscoverHero = ({
   description,
   badges = [],
   featured,
+  featuredSlot,
   featuredLabel = "Featured · 01",
   stats = [],
+  statsSlot,
   titleSize = "clamp(2.25rem, 5vw, 4rem)",
   gridClassName = "lg:grid-cols-[1.05fr_0.95fr] lg:items-center",
   statsVariant = "grid",
@@ -172,10 +174,10 @@ export const DiscoverHero = ({
           )}
         </div>
 
-        <FeaturedMovie movie={featured} label={featuredLabel} />
+        {featuredSlot ?? <FeaturedMovie movie={featured} label={featuredLabel} />}
       </div>
 
-      {stats.length > 0 && (
+      {(statsSlot || stats.length > 0) && (
         <div
           className={
             statsVariant === "inline"
@@ -183,13 +185,14 @@ export const DiscoverHero = ({
               : "mt-10 grid grid-cols-2 gap-y-4 border-t border-white/15 pt-5 sm:grid-cols-4"
           }
         >
-          {stats.map((stat) => (
-            <Stat
-              key={stat.label}
-              {...stat}
-              inline={statsVariant === "inline"}
-            />
-          ))}
+          {statsSlot ??
+            stats.map((stat) => (
+              <Stat
+                key={stat.label}
+                {...stat}
+                inline={statsVariant === "inline"}
+              />
+            ))}
         </div>
       )}
     </div>

@@ -1,3 +1,4 @@
+"use client";
 import Image from "next/image";
 import Link from "next/link";
 import { AiOutlineArrowRight } from "react-icons/ai";
@@ -59,14 +60,7 @@ const GenreTile = ({ genre, index, feature, coral, cyan }) => {
         <div className="absolute inset-0 bg-gradient-to-t from-[#04152d] via-[#04152d]/70 to-[#04152d]/10" />
       )}
 
-      <div className="relative z-10 flex items-start justify-between">
-        <span
-          className={`text-[10px] font-bold tracking-widest tabular-nums ${
-            accent ? "text-[#04152d]/70" : "text-[#51E5FF]"
-          }`}
-        >
-          {String(index + 1).padStart(2, "0")}
-        </span>
+      <div className="relative z-10 flex justify-end">
         <AiOutlineArrowRight
           size={feature ? 22 : 16}
           aria-hidden="true"

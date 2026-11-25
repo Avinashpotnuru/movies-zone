@@ -1,7 +1,8 @@
+"use client";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 
 import {
   AiFillStar,
@@ -254,7 +255,6 @@ const MoviesSearch = ({
   }, [query]);
 
   useEffect(() => {
-    if (!router.isReady) return;
     const term = debouncedInput.trim();
     if (term.length < 2 || term === query || term === lastAutoTerm.current) {
       return;
